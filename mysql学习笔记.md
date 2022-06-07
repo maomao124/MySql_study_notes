@@ -428,3 +428,303 @@ SELECT @@have_profiling ;
 
 
 
+session/global级别开启profiling：
+
+```sql
+SET profiling = 1;
+```
+
+
+
+查看每一条SQL的耗时基本情况：
+
+```sql
+show profiles;
+```
+
+
+
+```sh
+mysql> SET profiling = 1;
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> explain select count(*) from tb_hotel
+    -> ;
++----+-------------+----------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+| id | select_type | table    | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
++----+-------------+----------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | tb_hotel | NULL       | index | NULL          | PRIMARY | 8       | NULL |  201 |   100.00 | Using index |
++----+-------------+----------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>  select count(*) from tb_hotel
+    -> ;
++----------+
+| count(*) |
++----------+
+|      201 |
++----------+
+1 row in set (0.00 sec)
+
+mysql> show profiles;
++----------+------------+---------------------------------------+
+| Query_ID | Duration   | Query                                 |
++----------+------------+---------------------------------------+
+|        1 | 0.00086325 | explain select count(*) from tb_hotel |
+|        2 | 0.00165000 | select count(*) from tb_hotel         |
++----------+------------+---------------------------------------+
+2 rows in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+```sh
+mysql> show profiles;
++----------+------------+-------------------------------------------------------------+
+| Query_ID | Duration   | Query                                                       |
++----------+------------+-------------------------------------------------------------+
+|        1 | 0.00086325 | explain select count(*) from tb_hotel                       |
+|        2 | 0.00165000 | select count(*) from tb_hotel                               |
+|        3 | 0.00015850 | SELECT DATABASE()                                           |
+|        4 | 0.01245925 | show tables                                                 |
+|        5 | 0.00442350 | explain select * from score                                 |
+|        6 | 0.00570150 | explain select * from student                               |
+|        7 | 0.00038025 | explain select * from student where student_no=202012340110 |
+|        8 | 0.00062775 | explain select * from student where class_no=1002           |
++----------+------------+-------------------------------------------------------------+
+8 rows in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+
+
+## explain
+
+语法:
+
+直接在select语句之前加上关键字 explain / desc
+
+EXPLAIN SELECT 字段列表 FROM 表名 WHERE 条件 ;
+
+
+
+```sh
+mysql> use student1;
+Database changed
+mysql> show tables;
++-------------------------+
+| Tables_in_student1      |
++-------------------------+
+| administrators          |
+| administrators_password |
+| class                   |
+| course                  |
+| forum                   |
+| login_log               |
+| news                    |
+| score                   |
+| student                 |
+| student_password        |
+| teach                   |
+| teacher                 |
+| teacher_password        |
++-------------------------+
+13 rows in set (0.01 sec)
+
+mysql> explain select * from score;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | score | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 7199 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+mysql> explain select * from student;
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  600 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------+
+1 row in set, 1 warning (0.01 sec)
+
+mysql> explain select * from student where student_no=202012340110;
++----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+| id | select_type | table   | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
++----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | const | PRIMARY,no    | PRIMARY | 8       | const |    1 |   100.00 | NULL  |
++----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where class_no=1002;
++----+-------------+---------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ref  | class_no      | class_no | 8       | const |   60 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+说明：
+
+* id： select查询的序列号，表示查询中执行select子句或者是操作表的顺序 (id相同，执行顺序从上到下；id不同，值越大，越先执行)。
+* select_type： 表示 SELECT 的类型，常见的取值有 SIMPLE（简单表，即不使用表连接 或者子查询）、PRIMARY（主查询，即外层的查询）、 UNION（UNION 中的第二个或者后面的查询语句）、 SUBQUERY（SELECT/WHERE之后包含了子查询）等
+* type ：表示连接类型，性能由好到差的连接类型为NULL、system、const、 eq_ref、ref、range、 index、all 。
+* possible_key： 显示可能应用在这张表上的索引，一个或多个。
+* key： 实际使用的索引，如果为NULL，则没有使用索引。
+* key_len ：表示索引中使用的字节数， 该值为索引字段最大可能长度，并非实际使用长度，在不损失精确性的前提下， 长度越短越好 。
+* rows ：MySQL认为必须要执行查询的行数，在innodb引擎的表中，是一个估计值， 可能并不总是准确的。
+* filtered 表示返回结果的行数占需读取行数的百分比， filtered 的值越大越好。
+
+
+
+
+
+
+
+# 索引使用
+
+## 最左前缀法则
+
+如果索引了多列（联合索引），要遵守最左前缀法则。最左前缀法则指的是查询从索引的最左列开始， 并且不跳过索引中的列。如果跳跃某一列，索引将会部分失效(后面的字段索引失效)。
+
+对于最左前缀法则指的是，查询时，最左变的列，也就是profession必须存在，否则索引全部失效。 而且中间不能跳过某一列，否则该列后面的字段索引将失效。
+
+
+
+address、id_card、email建立索引
+
+
+
+```sh
+mysql> explain select * from student where address="13";
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref   | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 183     | const |    1 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where id_card="111";
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  600 |    10.00 | Using where |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where email="222";
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  600 |    10.00 | Using where |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where address="1" and id_card="1";
++----+-------------+---------+------------+------+---------------+--------+---------+-------------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref         | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+--------+---------+-------------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 245     | const,const |    1 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+--------+---------+-------------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where address="1" and id_card="1" and email="111";
++----+-------------+---------+------------+------+---------------+--------+---------+-------------------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref               | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+--------+---------+-------------------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 368     | const,const,const |    1 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+--------+---------+-------------------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where address="1" and email="111";
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref   | rows | filtered | Extra                 |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 183     | const |    1 |    10.00 | Using index condition |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> explain select * from student where email="2" and address="1";
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref   | rows | filtered | Extra                 |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 183     | const |    1 |    10.00 | Using index condition |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-----------------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+## 范围查询
+
+联合索引中，出现范围查询(>,<)，范围查询右侧的列索引失效。
+
+在业务允许的情况下，尽可能的使用类似于 >= 或 <= 这类的范围查询，而避免使用 > 或 <
+
+
+
+
+
+## 索引失效情况
+
+### 索引列运算
+
+不要在索引列上进行运算操作， 索引将失效。
+
+
+
+例：
+
+```sh
+explain select * from tb_user where substring(phone,10,2) = '15'
+```
+
+
+
+### 字符串不加引号
+
+字符串类型字段使用时，不加引号，索引将失效。
+
+
+
+```sh
+mysql> explain select * from student where address=0;
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ALL  | index1        | NULL | NULL    | NULL |  600 |    10.00 | Using where |
++----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+1 row in set, 3 warnings (0.00 sec)
+
+mysql> explain select * from student where address="0";
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys | key    | key_len | ref   | rows | filtered | Extra |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | student | NULL       | ref  | index1        | index1 | 183     | const |    1 |   100.00 | NULL  |
++----+-------------+---------+------------+------+---------------+--------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+```
+
+
+
+
+
+### 模糊查询
+
