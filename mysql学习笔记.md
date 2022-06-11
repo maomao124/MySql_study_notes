@@ -2378,3 +2378,637 @@ mysql>
 
 ## case
 
+当case_value的值为 when_value1时，执行statement_list1，当值为 when_value2时， 执行statement_list2， 否则就执行 statement_list
+
+```sql
+CASE case_value
+	WHEN when_value1 THEN statement_list1
+	[ WHEN when_value2 THEN statement_list2] ...
+	[ ELSE statement_list ]
+END CASE;
+```
+
+
+
+当条件search_condition1成立时，执行statement_list1，当条件search_condition2成 立时，执行statement_list2， 否则就执行 statement_list
+
+```sql
+CASE
+	WHEN search_condition1 THEN statement_list1
+	[WHEN search_condition2 THEN statement_list2] ...
+	[ELSE statement_list]
+END CASE;
+```
+
+
+
+
+
+## while
+
+while 循环是有条件的循环控制语句。满足条件后，再执行循环体中的SQL语句。具体语法为：
+
+```sql
+WHILE 条件 DO
+	SQL逻辑...
+END WHILE;
+```
+
+
+
+计算从1累加到n的值，n为传入的参数值。
+
+```sql
+CREATE PROCEDURE p7 ( IN n INT ) BEGIN
+	DECLARE
+		total INT DEFAULT 0;
+	WHILE
+			n > 0 DO
+			
+			SET total := total + n;
+		
+		SET n := n - 1;
+		
+	END WHILE;
+	SELECT
+		total;
+
+END;
+```
+
+
+
+运行：
+
+```sql
+call p7 (100);
+```
+
+
+
+```sh
+mysql> call p7 (100);
++-------+
+| total |
++-------+
+|  5050 |
++-------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> call p7 (500);
++--------+
+| total  |
++--------+
+| 125250 |
++--------+
+1 row in set (0.01 sec)
+
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> call p7 (5000);
++----------+
+| total    |
++----------+
+| 12502500 |
++----------+
+1 row in set (0.11 sec)
+
+Query OK, 0 rows affected (0.11 sec)
+
+mysql> call p7 (50000);
++------------+
+| total      |
++------------+
+| 1250025000 |
++------------+
+1 row in set (0.96 sec)
+
+Query OK, 0 rows affected (0.96 sec)
+
+mysql>
+```
+
+
+
+
+
+## repeat
+
+repeat是有条件的循环控制语句, 当满足until声明的条件的时候，则退出循环 。具体语法为：
+
+```sql
+REPEAT
+	SQL逻辑...
+	UNTIL 条件
+END REPEAT;
+
+```
+
+
+
+## loop
+
+LOOP 实现简单的循环，如果不在SQL逻辑中增加退出循环的条件，可以用其来实现简单的死循环。 LOOP可以配合一下两个语句使用：
+
+* LEAVE ：配合循环使用，退出循环。
+* ITERATE：必须用在循环中，作用是跳过当前循环剩下的语句，直接进入下一次循环。
+
+
+
+```sql
+[begin_label:] LOOP
+	SQL逻辑...
+END LOOP [end_label];
+```
+
+
+
+退出指定标记的循环体：
+
+```sql
+LEAVE label; 
+```
+
+直接进入下一次循环：
+
+```sql
+ITERATE label;
+```
+
+
+
+计算从1累加到n的值，n为传入的参数值。
+
+```sql
+CREATE PROCEDURE p9 ( IN n INT ) BEGIN
+	DECLARE
+		total INT DEFAULT 0;
+	sum :
+	LOOP
+		IF
+			n <= 0 THEN
+				LEAVE sum;
+			
+		END IF;
+		
+		SET total := total + n;
+		
+		SET n := n - 1;
+		
+	END LOOP sum;
+	SELECT
+	total;
+END;
+```
+
+
+
+运行：
+
+```sql
+call p9(100);
+```
+
+
+
+```sh
+mysql> call p9(100);
++-------+
+| total |
++-------+
+|  5050 |
++-------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> call p9(500);
++--------+
+| total  |
++--------+
+| 125250 |
++--------+
+1 row in set (0.01 sec)
+
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> call p9(5000);
++----------+
+| total    |
++----------+
+| 12502500 |
++----------+
+1 row in set (0.10 sec)
+
+Query OK, 0 rows affected (0.10 sec)
+
+mysql> call p9(50000);
++------------+
+| total      |
++------------+
+| 1250025000 |
++------------+
+1 row in set (1.00 sec)
+
+Query OK, 0 rows affected (1.00 sec)
+
+mysql>
+```
+
+
+
+
+
+## 游标
+
+游标（CURSOR）是用来存储查询结果集的数据类型 , 在存储过程和函数中可以使用游标对结果集进 行循环的处理。游标的使用包括游标的声明、OPEN、FETCH 和 CLOSE
+
+### 声明游标
+
+```sql
+DECLARE 游标名称 CURSOR FOR 查询语句 ;
+```
+
+### 打开游标
+
+```sql
+OPEN 游标名称 ;
+```
+
+###  获取游标记录
+
+```sql
+FETCH 游标名称 INTO 变量 [, 变量 ] ;
+```
+
+### 关闭游标
+
+```sql
+CLOSE 游标名称 ;
+```
+
+
+
+
+
+## 条件处理程序
+
+条件处理程序（Handler）可以用来定义在流程控制结构执行过程中遇到问题时相应的处理步骤。
+
+语法：
+
+```sql
+DECLARE handler_action HANDLER FOR condition_value [, condition_value]
+... statement ;
+handler_action 的取值：
+	CONTINUE: 继续执行当前程序
+	EXIT: 终止执行当前程序
+condition_value 的取值：
+	SQLSTATE sqlstate_value: 状态码，如 02000
+	SQLWARNING: 所有以01开头的SQLSTATE代码的简写
+	NOT FOUND: 所有以02开头的SQLSTATE代码的简写
+	SQLEXCEPTION: 所有没有被SQLWARNING 或 NOT FOUND捕获的SQLSTATE代码的简写
+
+```
+
+
+
+
+
+# 存储函数
+
+存储函数是有返回值的存储过程，存储函数的参数只能是IN类型的。
+
+语法：
+
+```sql
+CREATE FUNCTION 存储函数名称 ([ 参数列表 ])
+RETURNS type [characteristic ...]
+BEGIN
+	-- SQL语句
+	RETURN ...;
+END ;
+```
+
+
+
+characteristic说明：
+
+* DETERMINISTIC：相同的输入参数总是产生相同的结果
+* NO SQL ：不包含 SQL 语句。
+* READS SQL DATA：包含读取数据的语句，但不包含写入数据的语句。
+
+
+
+计算从1累加到n的值，n为传入的参数值。
+
+```sql
+CREATE FUNCTION fun1 ( n INT ) RETURNS INT DETERMINISTIC BEGIN
+	DECLARE
+		total INT DEFAULT 0;
+	WHILE
+			n > 0 DO
+			
+			SET total := total + n;
+		
+		SET n := n - 1;
+		
+	END WHILE;
+RETURN total;
+END;
+```
+
+
+
+运行：
+
+```sql
+select fun1(100);
+```
+
+
+
+```sh
+mysql> select fun1(100);
++-----------+
+| fun1(100) |
++-----------+
+|      5050 |
++-----------+
+1 row in set (0.00 sec)
+
+mysql> select fun1(500);
++-----------+
+| fun1(500) |
++-----------+
+|    125250 |
++-----------+
+1 row in set (0.01 sec)
+
+mysql> select fun1(5000);
++------------+
+| fun1(5000) |
++------------+
+|   12502500 |
++------------+
+1 row in set (0.07 sec)
+
+mysql> select fun1(50000);
++-------------+
+| fun1(50000) |
++-------------+
+|  1250025000 |
++-------------+
+1 row in set (0.76 sec)
+
+mysql>
+```
+
+
+
+
+
+
+
+# 触发器
+
+触发器是与表有关的数据库对象，指在insert/update/delete之前(BEFORE)或之后(AFTER)，触 发并执行触发器中定义的SQL语句集合。触发器的这种特性可以协助应用在数据库端确保数据的完整性 , 日志记录 , 数据校验等操作 。
+
+使用别名OLD和NEW来引用触发器中发生变化的记录内容，这与其他的数据库是相似的。现在触发器还 只支持行级触发，不支持语句级触发。
+
+
+
+* INSERT 型触发器：NEW 表示将要或者已经新增的数据
+* UPDATE 型触发器 ：OLD 表示修改之前的数据 , NEW 表示将要或已经修改后的数据
+* DELETE 型触发器：OLD 表示将要或者已经删除的数据
+
+
+
+## 语法
+
+### 创建
+
+```sql
+CREATE TRIGGER trigger_name
+BEFORE/AFTER INSERT/UPDATE/DELETE
+ON tbl_name FOR EACH ROW -- 行级触发器
+BEGIN
+	trigger_stmt ;
+END;
+```
+
+
+
+### 查看
+
+```sql
+SHOW TRIGGERS ;
+```
+
+
+
+### 删除
+
+```sql
+DROP TRIGGER [schema_name.]trigger_name ; 
+```
+
+
+
+
+
+# 锁
+
+锁是计算机协调多个进程或线程并发访问某一资源的机制。在数据库中，除传统的计算资源（CPU、 RAM、I/O）的争用以外，数据也是一种供许多用户共享的资源。如何保证数据并发访问的一致性、有 效性是所有数据库必须解决的一个问题，锁冲突也是影响数据库并发访问性能的一个重要因素。从这个 角度来说，锁对数据库而言显得尤其重要，也更加复杂。
+
+MySQL中的锁，按照锁的粒度分，分为以下三类：
+
+* 全局锁：锁定数据库中的所有表。
+* 表级锁：每次操作锁住整张表。
+* 行级锁：每次操作锁住对应的行数据。
+
+
+
+## 全局锁
+
+全局锁就是对整个数据库实例加锁，加锁后整个实例就处于只读状态，后续的DML的写语句，DDL语 句，已经更新操作的事务提交语句都将被阻塞。
+
+其典型的使用场景是做全库的逻辑备份，对所有的表进行锁定，从而获取一致性视图，保证数据的完整性。
+
+
+
+假设在数据库中存在这样三张表: tb_stock 库存表，tb_order 订单表，tb_orderlog 订单日志表。
+
+* 在进行数据备份时，先备份了tb_stock库存表。
+* 然后接下来，在业务系统中，执行了下单操作，扣减库存，生成订单（更新tb_stock表，插入 tb_order表）。
+* 然后再执行备份 tb_order表的逻辑。
+* 业务中执行插入订单日志操作。
+* 最后，又备份了tb_orderlog表。
+* 此时备份出来的数据，是存在问题的。因为备份出来的数据，tb_stock表与tb_order表的数据不一 致(有最新操作的订单信息,但是库存数没减)。
+
+
+
+对数据库进行进行逻辑备份之前，先对整个数据库加上全局锁，一旦加了全局锁之后，其他的DDL、 DML全部都处于阻塞状态，但是可以执行DQL语句，也就是处于只读状态，而数据备份就是查询操作。 那么数据在进行逻辑备份的过程中，数据库中的数据就是不会发生变化的，这样就保证了数据的一致性 和完整性
+
+
+
+### 语法
+
+加全局锁：
+
+```sql'
+flush tables with read lock ;
+```
+
+
+
+```sh
+mysql> use student1;
+Database changed
+mysql> show tables;
++-------------------------+
+| Tables_in_student1      |
++-------------------------+
+| administrators          |
+| administrators_password |
+| class                   |
+| course                  |
+| forum                   |
+| login_log               |
+| news                    |
+| score                   |
+| student                 |
+| student_password        |
+| teach                   |
+| teacher                 |
+| teacher_password        |
++-------------------------+
+13 rows in set (0.02 sec)
+
+mysql> flush tables with read lock;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+数据备份：
+
+```sql
+mysqldump -uroot –pxxx student1 > student1.sql
+```
+
+
+
+释放锁：
+
+```sql
+unlock tables;
+```
+
+
+
+### 特点
+
+数据库中加全局锁，是一个比较重的操作，存在以下问题：
+
+* 如果在主库上备份，那么在备份期间都不能执行更新，业务基本上就得停摆。
+* 如果在从库上备份，那么在备份期间从库不能执行主库同步过来的二进制日志（binlog），会导 致主从延迟。
+
+
+
+
+
+## 表级锁
+
+表级锁，每次操作锁住整张表。锁定粒度大，发生锁冲突的概率最高，并发度最低。应用在MyISAM、 InnoDB、BDB等存储引擎中。
+
+对于表级锁，主要分为以下三类：
+
+* 表锁 
+* 元数据锁（meta data lock，MDL） 
+* 意向锁
+
+
+
+### 表锁
+
+对于表锁，分为两类：
+
+* 表共享读锁（read lock） 
+* 表独占写锁（write lock）
+
+语法：
+
+* 加锁：lock tables 表名... read/write。 
+* 释放锁：unlock tables / 客户端断开连接 。
+
+
+
+```sh
+mysql> lock tables student read;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+```
+
+
+
+* 读锁：客户端一，对指定表加了读锁，不会影响客户端二的读，但是会阻塞客户端二的写。
+
+* 写锁：客户端一，对指定表加了写锁，会阻塞客户端二的读和写。
+
+ 读锁不会阻塞其他客户端的读，但是会阻塞写。写锁既会阻塞其他客户端的读，又会阻塞其他客户端的写。
+
+
+
+### 元数据锁
+
+meta data lock , 元数据锁，简写MDL。
+
+MDL加锁过程是系统自动控制，无需显式使用，在访问一张表的时候会自动加上。MDL锁主要作用是维 护表元数据的数据一致性，在表上有活动事务的时候，不可以对元数据进行写入操作。为了避免DML与 DDL冲突，保证读写的正确性。
+
+
+
+|对应SQL| 锁类型| 说明|
+| ---- | ---- | ---- |
+| lock tables xxx read / write| SHARED_READ_ONLY / SHARED_NO_READ_WRITE | |
+|select 、select ... lock in share mode| SHARED_READ |与SHARED_READ、 SHARED_WRITE兼容，与 EXCLUSIVE互斥|
+|insert 、update、 delete、select ... for update|SHARED_WRITE|与SHARED_READ、 SHARED_WRITE兼容，与 EXCLUSIVE互斥  |
+| alter table ... | EXCLUSIVE| 与其他的MDL都互斥 |
+
+
+
+### 意向锁
+
+为了避免DML在执行时，加的行锁与表锁的冲突，在InnoDB中引入了意向锁，使得表锁不用检查每行 数据是否加锁，使用意向锁来减少表锁的检查
+
+
+
+* 意向共享锁(IS): 由语句select ... lock in share mode添加 。 与 表锁共享锁 (read)兼容，与表锁排他锁(write)互斥。
+* 意向排他锁(IX): 由insert、update、delete、select...for update添加 。与表锁共 享锁(read)及排他锁(write)都互斥，意向锁之间不会互斥。
+
+
+
+一旦事务提交了，意向共享锁、意向排他锁，都会自动释放。
+
+
+
+可以通过以下SQL，查看意向锁及行锁的加锁情况：
+
+```sql
+select object_schema,object_name,index_name,lock_type,lock_mode,lock_data from
+performance_schema.data_locks;
+```
+
+
+
+
+
+## 行级锁
+

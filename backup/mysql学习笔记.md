@@ -1928,3 +1928,453 @@ mysql>
 
 # 存储过程
 
+存储过程是事先经过编译并存储在数据库中的一段 SQL 语句的集合，调用存储过程可以简化应用开发 人员的很多工作，减少数据在数据库和应用服务器之间的传输，对于提高数据处理的效率是有好处的。 存储过程思想上很简单，就是数据库 SQL 语言层面的代码封装与重用。
+
+
+
+## 特点
+
+* 封装，复用：可以把某一业务SQL封装在存储过程中，需要用到 的时候直接调用即可。
+* 可以接收参数，也可以返回数据 ：再存储过程中，可以传递参数，也可以接收返回值。
+* 减少网络交互，效率提升：如果涉及到多条SQL，每执行一次都是一次网络传 输。 而如果封装在存储过程中，我们只需要网络交互一次可能就可以了。
+
+
+
+## 语法
+
+### 创建
+
+```sql
+CREATE PROCEDURE 存储过程名称 ([ 参数列表 ])
+BEGIN
+-- SQL语句
+END ;
+
+```
+
+
+
+```sql
+CREATE PROCEDURE student_count()
+BEGIN
+select count(*) from student;
+SELECT count(*) AS count_class_no_is_1001 from student WHERE class_no=1001;
+END;
+```
+
+
+
+### 调用
+
+```sql
+CALL 名称 ([ 参数 ]);
+```
+
+
+
+```sh
+mysql> call student_count();
++----------+
+| count(*) |
++----------+
+|      600 |
++----------+
+1 row in set (0.00 sec)
+
++------------------------+
+| count_class_no_is_1001 |
++------------------------+
+|                     60 |
++------------------------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+```
+
+
+
+### 查看
+
+查询指定数据库的存储过程及状态信息
+
+```sql
+SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_SCHEMA = 'xxx';
+```
+
+查询某个存储过程的定义
+
+```sql
+SHOW CREATE PROCEDURE 存储过程名称 ;
+```
+
+
+
+```sh
+mysql> SHOW CREATE PROCEDURE student_count;
++---------------+--------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| Procedure     | sql_mode                                   | Create Procedure                                                                                                                                                                      | character_set_client | collation_connection | Database Collation |
++---------------+--------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| student_count | STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION | CREATE DEFINER=`root`@`localhost` PROCEDURE `student_count`()
+BEGIN
+select count(*)  from student;
+SELECT count(*) AS count_class_no_is_1001 from student WHERE class_no=1001;
+END | utf8mb4              | utf8mb4_0900_ai_ci   | utf8_general_ci    |
++---------------+--------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+1 row in set (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+### 删除
+
+```sql
+DROP PROCEDURE [ IF EXISTS ] 存储过程名称;
+```
+
+
+
+```sh
+mysql> drop procedure if exists student_count;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> SHOW CREATE PROCEDURE student_count;
+ERROR 1305 (42000): PROCEDURE student_count does not exist
+mysql>
+```
+
+
+
+在命令行中，执行创建存储过程的SQL时，需要通过关键字 delimiter 指定SQL语句的结束符。
+
+
+
+
+
+## 变量
+
+在MySQL中变量分为三种类型: 系统变量、用户定义变量、局部变量。
+
+###  系统变量
+
+系统变量是MySQL服务器提供，不是用户定义的，属于服务器层面。分为全局变量（GLOBAL）、会话 变量（SESSION）。
+
+查看所有系统变量
+
+```sql
+SHOW [ SESSION | GLOBAL ] VARIABLES ;
+```
+
+
+
+```sh
+show session variables;
+```
+
+
+
+设置系统变量
+
+```sql
+SET [ SESSION | GLOBAL ] 系统变量名 = 值;
+```
+
+```sql
+SET @@[SESSION | GLOBAL]系统变量名 = 值;
+```
+
+
+
+### 用户定义变量
+
+用户定义变量是用户根据需要自己定义的变量，用户变量不用提前声明，在用的时候直接用 "@变量 名" 使用就可以。其作用域为当前连接。
+
+ 赋值：
+
+```sql
+SET @var_name = expr [, @var_name = expr] ... ;
+```
+
+```sql
+SET @var_name := expr [, @var_name := expr] ... ;
+```
+
+赋值时，可以使用 = ，也可以使用 := 。
+
+```sql
+SELECT @var_name := expr [, @var_name := expr] ... ;
+```
+
+```sql
+SELECT 字段名 INTO @var_name FROM 表名;
+```
+
+
+
+```sh
+mysql> set @a=134;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> set @b=8765;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql>
+```
+
+
+
+ 使用：
+
+```sql
+SELECT @var_name ;
+```
+
+
+
+```sh
+mysql> select @a;
++------+
+| @a   |
++------+
+|  134 |
++------+
+1 row in set (0.00 sec)
+
+mysql> select @b;
++------+
+| @b   |
++------+
+| 8765 |
++------+
+1 row in set (0.00 sec)
+
+mysql>
+```
+
+
+
+用户定义的变量无需对其进行声明或初始化，只不过获取到的值为NULL。
+
+
+
+
+
+### 局部变量
+
+局部变量 是根据需要定义的在局部生效的变量，访问之前，需要DECLARE声明。可用作存储过程内的 局部变量和输入参数，局部变量的范围是在其内声明的BEGIN ... END块。
+
+声明：
+
+```sql
+DECLARE 变量名 变量类型 [DEFAULT ... ] ;
+```
+
+变量类型就是数据库字段类型：INT、BIGINT、CHAR、VARCHAR、DATE、TIME等。
+
+
+
+赋值：
+
+```sql
+SET 变量名 = 值 ;
+```
+
+```sql
+SET 变量名 := 值 ;
+```
+
+```sql
+SELECT 字段名 INTO 变量名 FROM 表名 ... ;
+```
+
+
+
+
+
+## if
+
+if 用于做条件判断，具体的语法结构为：
+
+```sql
+IF 条件1 THEN
+.....
+ELSEIF 条件2 THEN -- 可选
+.....
+ELSE -- 可选
+.....
+END IF;
+```
+
+
+
+在if条件判断的结构中，ELSE IF 结构可以有多个，也可以没有。 ELSE结构可以有，也可以没有。
+
+
+
+根据定义的分数score变量，判定当前分数对应的分数等级。
+
+* score >= 85分，等级为优秀。 
+* score >= 60分 且 score < 85分，等级为及格。
+*  score < 60分，等级为不及格。
+
+
+
+创建：
+
+```sql
+CREATE PROCEDURE p3 () BEGIN
+	DECLARE
+		score INT DEFAULT 58;
+	DECLARE
+		result VARCHAR ( 10 );
+	IF
+		score >= 85 THEN
+			
+			SET result := '优秀';
+		
+		ELSEIF score >= 60 THEN
+		
+		SET result := '及格';
+		ELSE 
+			SET result := '不及格';
+		
+	END IF;
+	SELECT
+	result;
+END;
+```
+
+
+
+运行：
+
+```sql
+call p3();
+```
+
+
+
+```sh
+mysql> call p3();
++--------+
+| result |
++--------+
+| 不及格 |
++--------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+```
+
+
+
+
+
+## 参数
+
+参数的类型，主要分为以下三种：IN、OUT、INOUT。 具体的含义如下：
+
+* IN：该类参数作为输入，也就是需要调用时传入值
+* OUT：该类参数作为输出，也就是该参数可以作为返回值
+* INOUT：既可以作为输入参数，也可以作为输出参数
+
+
+
+语法：
+
+```sql
+CREATE PROCEDURE 存储过程名称 ([ IN/OUT/INOUT 参数名 参数类型 ])
+BEGIN
+-- SQL语句
+END ;
+```
+
+
+
+根据传入参数score，判定当前分数对应的分数等级，并返回。
+
+* score >= 85分，等级为优秀。 
+* score >= 60分 且 score < 85分，等级为及格。
+*  score < 60分，等级为不及格。
+
+```sql
+CREATE PROCEDURE p4 (
+	IN score INT,
+	OUT result VARCHAR ( 10 )) BEGIN
+	IF
+		score >= 85 THEN
+			
+			SET result := '优秀';
+		
+		ELSEIF score >= 60 THEN
+		
+		SET result := '及格';
+		ELSE 
+			SET result := '不及格';
+		
+	END IF;
+END;
+```
+
+
+
+运行：
+
+```sql
+call p4(18, @result);
+```
+
+```sql
+select @result;
+```
+
+
+
+```sh
+mysql> call p4(18,@result);
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select @result;
++---------+
+| @result |
++---------+
+| 不及格  |
++---------+
+1 row in set (0.00 sec)
+
+mysql> call p4(86,@result);
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select @result;
++---------+
+| @result |
++---------+
+| 优秀    |
++---------+
+1 row in set (0.00 sec)
+
+mysql> call p4(69,@result);
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select @result;
++---------+
+| @result |
++---------+
+| 及格    |
++---------+
+1 row in set (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+## case
+
