@@ -3168,3 +3168,104 @@ innodb_flush_log_at_trx_commit：日志刷新到磁盘时机，取值主要包�
 
 
 
+**System Tablespace：**
+
+系统表空间是更改缓冲区的存储区域。如果表是在系统表空间而不是每个表文件或通用表空间中创建 的，它也可能包含表和索引数据。
+
+系统表空间，默认的文件名叫 ibdata1。
+
+
+
+ **File-Per-Table Tablespaces：**
+
+如果开启了innodb_file_per_table开关 ，则每个表的文件表空间包含单个InnoDB表的数据和索 引 ，并存储在文件系统上的单个数据文件中。
+
+开关参数：innodb_file_per_table
+
+
+
+ **General Tablespaces：**
+
+通用表空间，需要通过 CREATE TABLESPACE 语法创建通用表空间，在创建表时，可以指定该表空 间。
+
+创建表空间：
+
+```sql
+CREATE TABLESPACE ts_name ADD DATAFILE 'file_name' ENGINE = engine_name;
+```
+
+
+
+**Undo Tablespaces：**
+
+撤销表空间，MySQL实例在初始化时会自动创建两个默认的undo表空间（初始大小16M），用于存储 undo log日志。
+
+
+
+**Temporary Tablespaces：**
+
+InnoDB 使用会话临时表空间和全局临时表空间。存储用户创建的临时表等数据。
+
+
+
+**Doublewrite Buffer Files：**
+
+双写缓冲区，innoDB引擎将数据页从Buffer Pool刷新到磁盘前，先将数据页写入双写缓冲区文件中，便于系统异常时恢复数据。
+
+
+
+ **Redo Log：**
+
+重做日志，是用来实现事务的持久性。该日志文件由两部分组成：重做日志缓冲（redo log buffer）以及重做日志文件（redo log）,前者是在内存中，后者在磁盘中。当事务提交之后会把所 有修改信息都会存到该日志中, 用于在刷新脏页到磁盘时,发生错误时, 进行数据恢复使用。
+
+
+
+
+
+### 后台线程
+
+在InnoDB的后台线程中，分为4类，分别是：Master Thread 、IO Thread、Purge Thread、 Page Cleaner Thread。
+
+
+
+**Master Thread：**
+
+核心后台线程，负责调度其他线程，还负责将缓冲池中的数据异步刷新到磁盘中, 保持数据的一致性， 还包括脏页的刷新、合并插入缓存、undo页的回收 。
+
+
+
+**IO Thread：**
+
+在InnoDB存储引擎中大量使用了AIO来处理IO请求, 这样可以极大地提高数据库的性能，而IO Thread主要负责这些IO请求的回调。
+
+
+
+| 线程类型 | 默认个数 | 职责 |
+| -------- | -------- | ---- |
+|Read thread| 4| 负责读操作|
+|Write thread |4 |负责写操作|
+|Log thread| 1 |负责将日志缓冲区刷新到磁盘|
+|Insert buffer thread |1| 负责将写缓冲区内容刷新到磁盘|
+
+
+
+**Purge Thread：**
+
+主要用于回收事务已经提交了的undo log，在事务提交之后，undo log可能不用了，就用它来回收。
+
+
+
+**Page Cleaner Thread：**
+
+协助 Master Thread 刷新脏页到磁盘的线程，它可以减轻 Master Thread 的工作压力，减少阻塞。
+
+
+
+
+
+
+
+# 事务原理
+
+
+
