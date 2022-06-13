@@ -3267,5 +3267,433 @@ InnoDB 使用会话临时表空间和全局临时表空间。存储用户创建�
 
 # 事务原理
 
+事务 是一组操作的集合，它是一个不可分割的工作单位，事务会把所有的操作作为一个整体一起向系 统提交或撤销操作请求，即这些操作要么同时成功，要么同时失败。
 
+
+
+* 原子性（Atomicity）：事务是不可分割的最小操作单元，要么全部成功，要么全部失败。 
+* 一致性（Consistency）：事务完成时，必须使所有的数据都保持一致状态。 
+* 隔离性（Isolation）：数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环 境下运行。
+* 持久性（Durability）：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的。
+
+
+
+
+
+而对于这四大特性，实际上分为两个部分。 其中的原子性、一致性、持久性，实际上是由InnoDB中的 两份日志来保证的，一份是redo log日志，一份是undo log日志。 而隔离性是通过数据库的锁， 加上MVCC来保证的。
+
+
+
+## redo log
+
+重做日志，记录的是事务提交时数据页的物理修改，是用来实现事务的持久性。 该日志文件由两部分组成：
+
+* 重做日志缓冲（redo log buffer）
+* 重做日志文件（redo log file）
+
+前者是在内存中，后者在磁盘中。
+
+当事务提交之后会把所有修改信息都存到该日志文件中, 用于在刷新脏页到磁盘,发生错误时, 进行数据恢复使用。
+
+
+
+当对缓冲区的数据进行增删改之后，会首先将操作的数据页的变化，记录在redo log buffer中。在事务提交时，会将redo log buffer中的数据刷新到redo log磁盘文件中。 过一段时间之后，如果刷新缓冲区的脏页到磁盘时，发生错误，此时就可以借助于redo log进行数据 恢复，这样就保证了事务的持久性。 而如果脏页成功刷新到磁盘，或者涉及到的数据已经落盘，此 时redolog就没有作用了，就可以删除了，所以存在的两个redolog文件是循环写的。
+
+
+
+## undo log
+
+回滚日志，用于记录数据被修改前的信息 , 作用包含两个 : 
+
+* 提供回滚(保证事务的原子性) 
+* MVCC(多版本并发控制) 
+
+
+
+undo log和redo log记录物理日志不一样，它是逻辑日志。可以认为当delete一条记录时，undo log中会记录一条对应的insert记录，反之亦然，当update一条记录时，它记录一条对应相反的 update记录。当执行rollback时，就可以从undo log中的逻辑记录读取到相应的内容并进行回滚。
+
+
+
+Undo log销毁：undo log在事务执行时产生，事务提交时，并不会立即删除undo log，因为这些 日志可能还用于MVCC。
+
+Undo log存储：undo log采用段的方式进行管理和记录
+
+
+
+
+
+## MVCC
+
+### 基本概念
+
+**当前读：**
+
+读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加 锁。对于我们日常的操作，如：select ... lock in share mode(共享锁)，select ... for update、update、insert、delete(排他锁)都是一种当前读。
+
+
+
+**快照读：**
+
+简单的select（不加锁）就是快照读，快照读，读取的是记录数据的可见版本，有可能是历史数据， 不加锁，是非阻塞读。
+
+* Read Committed：每次select，都生成一个快照读。
+* Repeatable Read：开启事务后第一个select语句才是快照读的地方。
+*  Serializable：快照读会退化为当前读。
+
+
+
+**MVCC：**
+
+全称 Multi-Version Concurrency Control，多版本并发控制。指维护一个数据的多个版本， 使得读写操作没有冲突，快照读为MySQL实现MVCC提供了一个非阻塞读功能。MVCC的具体实现，还需 要依赖于数据库记录中的三个隐式字段、undo log日志、readView。
+
+
+
+### 隐藏字段
+
+
+
+| 隐藏字段 | 含义 |
+| -------- | ---- |
+|DB_TRX_ID| 最近修改事务ID，记录插入这条记录或最后一次修改该记录的事务ID。 |
+|DB_ROLL_PTR| 回滚指针，指向这条记录的上一个版本，用于配合undo log，指向上一个版 本。 |
+|DB_ROW_ID |隐藏主键，如果表结构没有指定主键，将会生成该隐藏字段。如果有主键，就不会生成此字段|
+
+
+
+
+
+### undolog
+
+回滚日志，在insert、update、delete的时候产生的便于数据回滚的日志。 当insert的时候，产生的undo log日志只在回滚时需要，在事务提交后，可被立即删除。 而update、delete的时候，产生的undo log日志不仅在回滚时需要，在快照读时也需要，不会立即 被删除。
+
+
+
+### 版本链
+
+不同事务或相同事务对同一条记录进行修改，会导致该记录的undolog生成一条 记录版本链表，链表的头部是最新的旧记录，链表尾部是最早的旧记录。
+
+
+
+### readview
+
+ReadView（读视图）是 快照读 SQL执行时MVCC提取数据的依据，记录并维护系统当前活跃的事务 （未提交的）id。
+
+
+
+ReadView中包含四个核心字段：
+
+| 字段 | 含义 |
+| ---- | ---- |
+|m_ids |当前活跃的事务ID集合 |
+|min_trx_id| 最小活跃事务ID |
+|max_trx_id| 预分配事务ID，当前最大事务ID+1（因为事务ID是自增的）|
+|creator_trx_id| ReadView创建者的事务ID|
+
+
+
+了版本链数据的访问规则：
+
+| 条件 | 是否可以访问 | 说明 |
+| ---- | ------------ | ---- |
+|trx_id == creator_trx_id| 可以访问该版本 |成立，说明数据是当前这个事 务更改的。|
+|trx_id < min_trx_id| 可以访问该版本| 成立，说明数据已经提交了。|
+|trx_id > max_trx_id |不可以访问该版本| 成立，说明该事务是在 ReadView生成后才开启。 |
+|min_trx_id <= trx_id <= max_trx_id| 如果trx_id不在m_ids中， 可以访问该版本，否则，不可以访问该版本 | 成立，说明数据已经提交。|
+
+
+
+不同的隔离级别，生成ReadView的时机不同：
+
+* READ COMMITTED ：在事务中每一次执行快照读时生成ReadView。
+* REPEATABLE READ：仅在事务中第一次执行快照读时生成ReadView，后续复用该ReadView。
+
+
+
+
+
+
+
+# MySQL管理
+
+## 系统数据库
+
+MySQL自带了一下四个数据库：
+
+* mysql：存储MySQL服务器正常运行所需要的各种信息 （时区、主从、用 户、权限等）
+* information_schema：提供了访问数据库元数据的各种表和视图，包含数据库、表、字段类 型及访问权限等
+* performance_schema：为MySQL服务器运行时状态提供了一个底层监控功能，主要用于收集数据库服务器性能参数
+* sys：包含了一系列方便 DBA 和开发人员利用 performance_schema 性能数据库进行性能调优和诊断的视图
+
+
+
+## 常用工具
+
+### mysql
+
+语法：
+
+```sh
+mysql [options] [database]
+```
+
+选项 ：
+
+* -u, --user=name #指定用户名 
+* -p, --password[=name] #指定密码 
+* -h, --host=name #指定服务器IP或域名 
+* -P, --port=port #指定连接端口 
+* -e, --execute=name #执行SQL语句并退出
+
+
+
+```sh
+C:\Users\mao>mysql -u root -p
+Enter password: ********
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 20
+Server version: 8.0.27 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+
+
+
+```sh
+mysql -uroot -pxxx student1 -e"select * from student"
+```
+
+
+
+
+
+### mysqladmin
+
+mysqladmin 是一个执行管理操作的客户端程序。可以用它来检查服务器的配置和当前状态、创建并删除数据库等。
+
+```sh
+C:\Users\mao>mysqladmin --help
+mysqladmin  Ver 8.0.27 for Win64 on x86_64 (MySQL Community Server - GPL)
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Administration program for the mysqld daemon.
+Usage: mysqladmin [OPTIONS] command command....
+  --bind-address=name IP address to bind to.
+  -c, --count=#       Number of iterations to make. This works with -i
+                      (--sleep) only.
+  -#, --debug[=#]     This is a non-debug version. Catch this and exit.
+  --debug-check       This is a non-debug version. Catch this and exit.
+  --debug-info        This is a non-debug version. Catch this and exit.
+  -f, --force         Don't ask for confirmation on drop database; with
+                      multiple commands, continue even if an error occurs.
+  -C, --compress      Use compression in server/client protocol.
+  --character-sets-dir=name
+                      Directory for character set files.
+  --default-character-set=name
+                      Set the default character set.
+  -?, --help          Display this help and exit.
+  -h, --host=name     Connect to host.
+  -b, --no-beep       Turn off beep on error.
+  -p, --password[=name]
+                      Password to use when connecting to server. If password is
+                      not given it's asked from the tty.
+  -,, --password1[=name]
+                      Password for first factor authentication plugin.
+  -,, --password2[=name]
+                      Password for second factor authentication plugin.
+  -,, --password3[=name]
+                      Password for third factor authentication plugin.
+  -W, --pipe          Use named pipes to connect to server.
+  -P, --port=#        Port number to use for connection or 0 for default to, in
+                      order of preference, my.cnf, $MYSQL_TCP_PORT,
+                      /etc/services, built-in default (3306).
+  --protocol=name     The protocol to use for connection (tcp, socket, pipe,
+                      memory).
+  -r, --relative      Show difference between current and previous values when
+                      used with -i. Currently only works with extended-status.
+  --shared-memory-base-name=name
+                      Base name of shared memory.
+  -s, --silent        Silently exit if one can't connect to server.
+  -S, --socket=name   The socket file to use for connection.
+  -i, --sleep=#       Execute commands repeatedly with a sleep between.
+  --ssl-mode=name     SSL connection mode.
+  --ssl-ca=name       CA file in PEM format.
+  --ssl-capath=name   CA directory.
+  --ssl-cert=name     X509 cert in PEM format.
+  --ssl-cipher=name   SSL cipher to use.
+  --ssl-key=name      X509 key in PEM format.
+  --ssl-crl=name      Certificate revocation list.
+  --ssl-crlpath=name  Certificate revocation list path.
+  --tls-version=name  TLS version to use, permitted values are: TLSv1, TLSv1.1,
+                      TLSv1.2, TLSv1.3
+  --ssl-fips-mode=name
+                      SSL FIPS mode (applies only for OpenSSL); permitted
+                      values are: OFF, ON, STRICT
+  --tls-ciphersuites=name
+                      TLS v1.3 cipher to use.
+  --server-public-key-path=name
+                      File path to the server public RSA key in PEM format.
+  --get-server-public-key
+                      Get server public key
+  -u, --user=name     User for login if not current user.
+  -v, --verbose       Write more information.
+  -V, --version       Output version information and exit.
+  -E, --vertical      Print output vertically. Is similar to --relative, but
+                      prints output vertically.
+  -w, --wait[=#]      Wait and retry if connection is down.
+  --connect-timeout=#
+  --shutdown-timeout=#
+  --plugin-dir=name   Directory for client-side plugins.
+  --default-auth=name Default authentication client-side plugin to use.
+  --enable-cleartext-plugin
+                      Enable/disable the clear text authentication plugin.
+  --show-warnings     Show warnings after execution
+  --compression-algorithms=name
+                      Use compression algorithm in server/client protocol.
+                      Valid values are any combination of
+                      'zstd','zlib','uncompressed'.
+  --zstd-compression-level=#
+                      Use this compression level in the client/server protocol,
+                      in case --compression-algorithms=zstd. Valid range is
+                      between 1 and 22, inclusive. Default is 3.
+
+Variables (--variable-name=value)
+and boolean options {FALSE|TRUE}  Value (after reading options)
+--------------------------------- ----------------------------------------
+bind-address                      (No default value)
+count                             0
+force                             FALSE
+compress                          FALSE
+character-sets-dir                (No default value)
+default-character-set             auto
+host                              (No default value)
+no-beep                           FALSE
+port                              0
+relative                          FALSE
+shared-memory-base-name           (No default value)
+socket                            (No default value)
+sleep                             0
+ssl-ca                            (No default value)
+ssl-capath                        (No default value)
+ssl-cert                          (No default value)
+ssl-cipher                        (No default value)
+ssl-key                           (No default value)
+ssl-crl                           (No default value)
+ssl-crlpath                       (No default value)
+tls-version                       (No default value)
+tls-ciphersuites                  (No default value)
+server-public-key-path            (No default value)
+get-server-public-key             FALSE
+user                              (No default value)
+verbose                           FALSE
+vertical                          FALSE
+connect-timeout                   43200
+shutdown-timeout                  3600
+plugin-dir                        (No default value)
+default-auth                      (No default value)
+enable-cleartext-plugin           FALSE
+show-warnings                     FALSE
+compression-algorithms            (No default value)
+zstd-compression-level            3
+
+Default options are read from the following files in the given order:
+C:\WINDOWS\my.ini C:\WINDOWS\my.cnf C:\my.ini C:\my.cnf C:\Program Files\MySQL\MySQL Server 8.0\my.ini C:\Program Files\MySQL\MySQL Server 8.0\my.cnf
+The following groups are read: mysqladmin client
+The following options may be given as the first argument:
+--print-defaults        Print the program argument list and exit.
+--no-defaults           Don't read default options from any option file,
+                        except for login file.
+--defaults-file=#       Only read default options from the given file #.
+--defaults-extra-file=# Read this file after the global files are read.
+--defaults-group-suffix=#
+                        Also read groups with concat(group, suffix)
+--login-path=#          Read this path from the login file.
+
+Where command is a one or more of: (Commands may be shortened)
+  create databasename   Create a new database
+  debug                 Instruct server to write debug information to log
+  drop databasename     Delete a database and all its tables
+  extended-status       Gives an extended status message from the server
+  flush-hosts           Flush all cached hosts
+  flush-logs            Flush all logs
+  flush-status          Clear status variables
+  flush-tables          Flush all tables
+  flush-threads         Flush the thread cache
+  flush-privileges      Reload grant tables (same as reload)
+  kill id,id,...        Kill mysql threads
+  password [new-password] Change old password to new-password in current format
+  ping                  Check if mysqld is alive
+  processlist           Show list of active threads in server
+  reload                Reload grant tables
+  refresh               Flush all tables and close and open logfiles
+  shutdown              Take server down
+  status                Gives a short status message from the server
+  start-replica         Start replication
+  start-slave           Deprecated: use start-replica instead
+  stop-replica          Stop replication
+  stop-slave            Deprecated: use stop-replica instead
+  variables             Prints variables available
+  version               Get version info from server
+
+C:\Users\mao>
+```
+
+
+
+
+
+语法：
+
+```sh
+mysqladmin [options] command ...
+```
+
+
+
+选项：
+
+* -u, --user=name #指定用户名 
+* -p, --password[=name] #指定密码 
+* -h, --host=name #指定服务器IP或域名 
+* -P, --port=port #指定连接端口
+
+
+
+```sh
+C:\Users\mao>mysqladmin -uroot -pxxx version
+mysqladmin: [Warning] Using a password on the command line interface can be insecure.
+mysqladmin  Ver 8.0.27 for Win64 on x86_64 (MySQL Community Server - GPL)
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Server version          8.0.27
+Protocol version        10
+Connection              localhost via TCP/IP
+TCP port                3306
+Uptime:                 2 days 16 sec
+
+Threads: 2  Questions: 252  Slow queries: 0  Opens: 202  Flush tables: 4  Open tables: 64  Queries per second avg: 0.001
+
+C:\Users\mao>
+```
+
+
+
+
+
+### mysqlbinlog
 
