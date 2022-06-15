@@ -3697,3 +3697,437 @@ C:\Users\mao>
 
 ### mysqlbinlog
 
+mysqlbinlog ：日志管理工具
+
+语法：
+
+```sh
+mysqlbinlog [options] log-files1 log-files2 ...
+```
+
+
+
+选项：
+
+* -d, --database=name 指定数据库名称，只列出指定的数据库相关操作。 
+* -o, --offset=# 忽略掉日志中的前n行命令。 
+* -r,--result-file=name 将输出的文本格式日志输出到指定文件。
+* -s, --short-form 显示简单格式， 省略掉一些信息。 
+* --start-datatime=date1 --stop-datetime=date2 指定日期间隔内的所有日志。 
+* --start-position=pos1 --stop-position=pos2 指定位置间隔内的所有日志。
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> ls
+
+
+    目录: C:\ProgramData\MySQL\MySQL Server 8.0\Data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/11     12:18                #innodb_temp
+d-----          2022/6/2     15:22                hotel
+d-----        2021/11/24     16:56                mysql
+d-----        2021/11/24     16:56                performance_schema
+d-----        2021/11/24     16:58                sakila
+d-----         2022/1/27     21:16                student
+d-----         2022/2/25     21:15                student1
+d-----         2022/1/17     23:11                student_test
+d-----        2021/11/24     16:56                sys
+d-----         2022/5/15     21:23                test
+d-----         2022/2/26     11:32                tx
+d-----        2021/11/24     16:58                world
+-a----         2022/6/10     22:22         196608 #ib_16384_0.dblwr
+-a----         2022/6/10     21:27        8585216 #ib_16384_1.dblwr
+-a----        2021/11/24     16:56             56 auto.cnf
+-a----        2021/11/24     16:56           1680 ca-key.pem
+-a----        2021/11/24     16:56           1112 ca.pem
+-a----        2021/11/24     16:56           1112 client-cert.pem
+-a----        2021/11/24     16:56           1680 client-key.pem
+-a----         2022/6/11     13:10       12582912 ibdata1
+-a----         2022/6/11     12:18       12582912 ibtmp1
+-a----         2022/6/11     12:17           1786 ib_buffer_pool
+-a----         2022/6/11     12:20       50331648 ib_logfile0
+-a----         2022/6/11     13:10       50331648 ib_logfile1
+-a----         2022/5/12     17:26            156 MAO-bin.000175
+-a----         2022/5/13     23:12         188269 MAO-bin.000176
+-a----         2022/5/14     19:45            156 MAO-bin.000177
+-a----         2022/5/21     12:56         925670 MAO-bin.000178
+-a----         2022/5/22     20:07         189888 MAO-bin.000179
+-a----         2022/5/22     23:33            156 MAO-bin.000180
+-a----         2022/5/23     12:14            156 MAO-bin.000181
+-a----         2022/5/23     22:24            156 MAO-bin.000182
+-a----         2022/5/24      9:55            156 MAO-bin.000183
+-a----         2022/5/25     19:22            156 MAO-bin.000184
+-a----         2022/5/26     16:29            156 MAO-bin.000185
+-a----         2022/5/27      9:46            156 MAO-bin.000186
+-a----         2022/5/28     13:00            156 MAO-bin.000187
+-a----         2022/5/29     19:44            156 MAO-bin.000188
+-a----         2022/5/30     21:47            156 MAO-bin.000189
+-a----         2022/5/31     19:14            156 MAO-bin.000190
+-a----          2022/6/1     12:55            156 MAO-bin.000191
+-a----          2022/6/3     19:24          77277 MAO-bin.000192
+-a----          2022/6/4     12:22            156 MAO-bin.000193
+-a----          2022/6/8     12:24           1296 MAO-bin.000194
+-a----          2022/6/8     19:23            372 MAO-bin.000195
+-a----          2022/6/8     20:49            179 MAO-bin.000196
+-a----          2022/6/9     17:36            179 MAO-bin.000197
+-a----         2022/6/10     15:39            179 MAO-bin.000198
+-a----         2022/6/11     12:17           6124 MAO-bin.000199
+-a----         2022/6/11     12:18            156 MAO-bin.000200
+-a----         2022/6/11     12:18            442 MAO-bin.index
+-a----         2022/6/11     12:18          39001 MAO-slow.log
+-a----         2022/6/12     19:37         395253 MAO.err
+-a----         2022/6/11     12:18              5 mao.pid
+-a----         2022/6/11     12:18       26214400 mysql.ibd
+-a----        2021/11/24     16:56           1676 private_key.pem
+-a----        2021/11/24     16:56            452 public_key.pem
+-a----        2021/11/24     16:56           1112 server-cert.pem
+-a----        2021/11/24     16:56           1676 server-key.pem
+-a----         2022/6/11     12:20       16777216 undo_001
+-a----         2022/6/11     12:20       16777216 undo_002
+
+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlbinlog -s MAO-bin.000196 MAO-bin.000192
+WARNING: --short-form is deprecated and will be removed in a future version
+
+# The proper term is pseudo_replica_mode, but we use this compatibility alias
+# to make the statement usable on server versions 8.0.24 and older.
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
+/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
+DELIMITER /*!*/;
+ROLLBACK/*!*/;
+# [empty]
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+ROLLBACK/*!*/;
+# [empty]
+# original_commit_timestamp=1654154478861196 (2022-06-02 15:21:18.861196 中国标准时间)
+# immediate_commit_timestamp=1654154478861196 (2022-06-02 15:21:18.861196 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1654154478861196*//*!*/;
+/*!80014 SET @@session.original_server_version=80027*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80027*//*!*/;
+SET @@SESSION.GTID_NEXT= 'ANONYMOUS'/*!*/;
+SET TIMESTAMP=1654154478/*!*/;
+SET @@session.pseudo_thread_id=999999999/*!*/;
+SET @@session.foreign_key_checks=1, @@session.sql_auto_is_null=0, @@session.unique_checks=1, @@session.autocommit=1/*!*/;
+SET @@session.sql_mode=1075838976/*!*/;
+SET @@session.auto_increment_increment=1, @@session.auto_increment_offset=1/*!*/;
+/*!\C utf8mb4 *//*!*/;
+SET @@session.character_set_client=255,@@session.collation_connection=255,@@session.collation_server=255/*!*/;
+SET @@session.lc_time_names=0/*!*/;
+SET @@session.collation_database=DEFAULT/*!*/;
+/*!80011 SET @@session.default_collation_for_utf8mb4=255*//*!*/;
+/*!80016 SET @@session.default_table_encryption=0*//*!*/;
+CREATE DATABASE `hotel` CHARACTER SET 'utf8'
+/*!*/;
+# original_commit_timestamp=1654154528619831 (2022-06-02 15:22:08.619831 中国标准时间)
+# immediate_commit_timestamp=1654154528619831 (2022-06-02 15:22:08.619831 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1654154528619831*//*!*/;
+/*!80014 SET @@session.original_server_version=80027*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80027*//*!*/;
+SET @@SESSION.GTID_NEXT= 'ANONYMOUS'/*!*/;
+use `hotel`/*!*/;
+SET TIMESTAMP=1654154528/*!*/;
+SET @@session.foreign_key_checks=0/*!*/;
+DROP TABLE IF EXISTS `tb_hotel` /* generated by server */
+/*!*/;
+# original_commit_timestamp=1654154528652913 (2022-06-02 15:22:08.652913 中国标准时间)
+# immediate_commit_timestamp=1654154528652913 (2022-06-02 15:22:08.652913 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1654154528652913*//*!*/;
+/*!80014 SET @@session.original_server_version=80027*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80027*//*!*/;
+SET @@SESSION.GTID_NEXT= 'ANONYMOUS'/*!*/;
+SET TIMESTAMP=1654154528/*!*/;
+/*!80013 SET @@session.sql_require_primary_key=0*//*!*/;
+CREATE TABLE `tb_hotel`  (
+  `id` bigint(20) NOT NULL COMMENT '閰掑簵id',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '閰掑簵鍚嶇О',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '閰掑簵鍦板潃',
+  `price` int(10) NOT NULL COMMENT '閰掑簵浠锋牸',
+  `score` int(2) NOT NULL COMMENT '閰掑簵璇勫垎',
+  `brand` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '閰掑簵鍝佺墝',
+  `city` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '鎵€鍦ㄥ煄甯?,
+  `star_name` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '閰掑簵鏄熺骇锛?鏄熷埌5鏄燂紝1閽诲埌5閽?,
+  `business` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '鍟嗗湀',
+  `latitude` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '绾害',
+  `longitude` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '缁忓害',
+  `pic` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '閰掑簵鍥剧墖',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact
+/*!*/;
+/*!50718 SET TRANSACTION ISOLATION LEVEL READ COMMITTED*//*!*/;
+# original_commit_timestamp=1654154528681977 (2022-06-02 15:22:08.681977 中国标准时间)
+# immediate_commit_timestamp=1654154528681977 (2022-06-02 15:22:08.681977 中国标准时间)
+/*!80001 SET @@session.original_commit_timestamp=1654154528681977*//*!*/;
+/*!80014 SET @@session.original_server_version=80027*//*!*/;
+/*!80014 SET @@session.immediate_server_version=80027*//*!*/;
+SET @@SESSION.GTID_NEXT= 'ANONYMOUS'/*!*/;
+SET TIMESTAMP=1654154528/*!*/;
+BEGIN
+/*!*/;
+COMMIT/*!*/;
+SET @@SESSION.GTID_NEXT= 'AUTOMATIC' /* added by mysqlbinlog */ /*!*/;
+DELIMITER ;
+# End of log file
+/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+### mysqlshow
+
+mysqlshow ：客户端对象查找工具，用来很快地查找存在哪些数据库、数据库中的表、表中的列或者索引。
+
+
+
+语法：
+
+```sh
+mysqlshow [options] [db_name [table_name [col_name]]]
+```
+
+
+
+选项：
+
+* --count 显示数据库及表的统计信息（数据库，表 均可以不指定） 
+* -i 显示指定数据库或者指定表的状态信息
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlshow -uroot -p --count
+Enter password: ********
++--------------------+--------+--------------+
+|     Databases      | Tables |  Total Rows  |
++--------------------+--------+--------------+
+| hotel              |      1 |          201 |
+| information_schema |     79 |        20402 |
+| mysql              |     37 |         4250 |
+| performance_schema |    110 |       241985 |
+| sakila             |     23 |        50086 |
+| student            |      4 |           36 |
+| student1           |     13 |         9130 |
+| student_test       |      1 |          800 |
+| sys                |    101 |         6092 |
+| test               |     15 |         1668 |
+| tx                 |      3 |            3 |
+| world              |      3 |         5302 |
++--------------------+--------+--------------+
+12 rows in set.
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlshow -uroot -p student1 --count
+Enter password: ********
+Database: student1
++-------------------------+----------+------------+
+|         Tables          | Columns  | Total Rows |
++-------------------------+----------+------------+
+| administrators          |        6 |         30 |
+| administrators_password |        2 |         30 |
+| class                   |        5 |         10 |
+| course                  |        5 |         12 |
+| forum                   |        6 |         70 |
+| login_log               |        4 |         70 |
+| news                    |        6 |          9 |
+| score                   |        7 |       7199 |
+| student                 |       13 |        600 |
+| student_password        |        2 |        600 |
+| teach                   |        5 |        300 |
+| teacher                 |        7 |        100 |
+| teacher_password        |        2 |        100 |
++-------------------------+----------+------------+
+13 rows in set.
+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlshow -uroot -p student1 score --count
+Enter password: ********
+Database: student1  Table: score  Rows: 7199
++-------------+-------------+-----------------+------+-----+---------+-------+---------------------------------+----------+
+| Field       | Type        | Collation       | Null | Key | Default | Extra | Privileges                      | Comment  |
++-------------+-------------+-----------------+------+-----+---------+-------+---------------------------------+----------+
+| no          | bigint      |                 | NO   | MUL |         |       | select,insert,update,references | 学生学号 |
+| course_no   | bigint      |                 | NO   | MUL |         |       | select,insert,update,references | 课程编号 |
+| usual_score | float       |                 | YES  |     |         |       | select,insert,update,references | 平时成绩 |
+| end_score   | float       |                 | YES  |     |         |       | select,insert,update,references | 期末成绩 |
+| final_score | float       |                 | YES  |     |         |       | select,insert,update,references | 最终分数 |
+| grade_point | float       |                 | YES  |     |         |       | select,insert,update,references | 绩点     |
+| semester    | varchar(15) | utf8_general_ci | YES  |     |         |       | select,insert,update,references | 学期     |
++-------------+-------------+-----------------+------+-----+---------+-------+---------------------------------+----------+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlshow -uroot -p student1 score no --count
+Enter password: ********
+Database: student1  Table: score  Rows: 7199  Wildcard: no
++-------+--------+-----------+------+-----+---------+-------+---------------------------------+----------+
+| Field | Type   | Collation | Null | Key | Default | Extra | Privileges                      | Comment  |
++-------+--------+-----------+------+-----+---------+-------+---------------------------------+----------+
+| no    | bigint |           | NO   | MUL |         |       | select,insert,update,references | 学生学号 |
++-------+--------+-----------+------+-----+---------+-------+---------------------------------+----------+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysqlshow -uroot -p student1 score -i
+Enter password: ********
+Database: student1  Wildcard: score
++-------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+-------------+------------+-----------------+----------+--------------------+---------+
+| Name  | Engine | Version | Row_format | Rows | Avg_row_length | Data_length | Max_data_length | Index_length | Data_free | Auto_increment | Create_time         | Update_time | Check_time | Collation       | Checksum | Create_options     | Comment |
++-------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+-------------+------------+-----------------+----------+--------------------+---------+
+| score | InnoDB | 10      | Dynamic    | 7199 | 220            | 1589248     | 0               | 393216       | 4194304   |                | 2022-02-25 21:15:18 |             |            | utf8_general_ci |          | row_format=DYNAMIC |         |
++-------+--------+---------+------------+------+----------------+-------------+-----------------+--------------+-----------+----------------+---------------------+-------------+------------+-----------------+----------+--------------------+---------+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+
+
+### mysqldump
+
+mysqldump： 客户端工具用来备份数据库或在不同数据库之间进行数据迁移。备份内容包含创建表，及插入表的SQL语句。
+
+
+
+语法：
+
+```sh
+mysqldump [options] db_name [tables]
+mysqldump [options] --database/-B db1 [db2 db3...]
+mysqldump [options] --all-databases/-A
+```
+
+
+
+连接选项：
+
+* -u, --user=name 指定用户名 
+* -p, --password[=name] 指定密码 
+* -h, --host=name 指定服务器ip或域名 
+* -P, --port=# 指定连接端口
+
+
+
+输出选项：
+
+* --add-drop-database 在每个数据库创建语句前加上 drop database 语句
+* --add-drop-table 在每个表创建语句前加上 drop table 语句 , 默认开启 ; 不 开启 (--skip-add-drop-table) 
+* -n, --no-create-db 不包含数据库的创建语句 
+* -t, --no-create-info 不包含数据表的创建语句 
+* -d --no-data 不包含数据 
+* -T, --tab=name 自动生成两个文件：一个.sql文件，创建表结构的语句；一 个.txt文件，数据文件
+
+
+
+```sh
+PS C:\Users\mao\Desktop\test> ls
+PS C:\Users\mao\Desktop\test> mysqldump -uroot -p student1 > student1.sql
+Enter password: ********
+PS C:\Users\mao\Desktop\test> ls
+
+
+    目录: C:\Users\mao\Desktop\test
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         2022/6/13     12:51        1154034 student1.sql
+
+
+PS C:\Users\mao\Desktop\test>
+```
+
+
+
+```sh
+PS C:\Users\mao\Desktop\test> mysqldump -uroot -p -d student1 > student1_tables.sql
+Enter password: ********
+PS C:\Users\mao\Desktop\test> ls
+
+
+    目录: C:\Users\mao\Desktop\test
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         2022/6/13     12:51        1154034 student1.sql
+-a----         2022/6/13     12:53          28722 student1_tables.sql
+
+
+PS C:\Users\mao\Desktop\test> mysqldump -uroot -p -t student1 > student1_data.sql
+Enter password: ********
+PS C:\Users\mao\Desktop\test> ls
+
+
+    目录: C:\Users\mao\Desktop\test
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         2022/6/13     12:51        1154034 student1.sql
+-a----         2022/6/13     12:54        1127872 student1_data.sql
+-a----         2022/6/13     12:53          28722 student1_tables.sql
+
+
+PS C:\Users\mao\Desktop\test>
+```
+
+
+
+
+
+### mysqlimport
+
+mysqlimport 是客户端数据导入工具，用来导入mysqldump 加 -T 参数后导出的文本文件。
+
+语法：
+
+```sh
+mysqlimport [options] db_name textfile1 [textfile2...]
+```
+
+
+
+### source
+
+如果需要导入sql文件，可以使用mysql中的source 指令 
+
+语法：
+
+```sh
+source xxxxx.sql
+```
+
+
+
+
+
+
+
+
+
+
+
+# 日志
+
+## 错误日志
+

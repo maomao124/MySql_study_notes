@@ -4131,3 +4131,1077 @@ source xxxxx.sql
 
 ## 错误日志
 
+错误日志是 MySQL 中最重要的日志之一，它记录了当 mysqld 启动和停止时，以及服务器在运行过 程中发生任何严重错误时的相关信息。当数据库出现任何故障导致无法正常使用时，建议首先查看此日志。
+
+查看日志位置：
+
+```sql
+show variables like '%log_error%';
+```
+
+
+
+```sh
+mysql> show variables like '%log_error%';
++----------------------------+----------------------------------------+
+| Variable_name              | Value                                  |
++----------------------------+----------------------------------------+
+| binlog_error_action        | ABORT_SERVER                           |
+| log_error                  | .\MAO.err                              |
+| log_error_services         | log_filter_internal; log_sink_internal |
+| log_error_suppression_list |                                        |
+| log_error_verbosity        | 2                                      |
++----------------------------+----------------------------------------+
+5 rows in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> ls
+
+
+    目录: C:\ProgramData\MySQL\MySQL Server 8.0\Data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/11     12:18                #innodb_temp
+d-----          2022/6/2     15:22                hotel
+d-----        2021/11/24     16:56                mysql
+d-----        2021/11/24     16:56                performance_schema
+d-----        2021/11/24     16:58                sakila
+d-----         2022/1/27     21:16                student
+d-----         2022/2/25     21:15                student1
+d-----         2022/1/17     23:11                student_test
+d-----        2021/11/24     16:56                sys
+d-----         2022/5/15     21:23                test
+d-----         2022/2/26     11:32                tx
+d-----        2021/11/24     16:58                world
+-a----         2022/6/13     12:47         196608 #ib_16384_0.dblwr
+-a----         2022/6/10     21:27        8585216 #ib_16384_1.dblwr
+-a----        2021/11/24     16:56             56 auto.cnf
+-a----        2021/11/24     16:56           1680 ca-key.pem
+-a----        2021/11/24     16:56           1112 ca.pem
+-a----        2021/11/24     16:56           1112 client-cert.pem
+-a----        2021/11/24     16:56           1680 client-key.pem
+-a----         2022/6/13     12:47       12582912 ibdata1
+-a----         2022/6/11     12:20       12582912 ibtmp1
+-a----         2022/6/11     12:17           1786 ib_buffer_pool
+-a----         2022/6/13     12:47       50331648 ib_logfile0
+-a----         2022/6/13     12:47       50331648 ib_logfile1
+-a----         2022/5/12     17:26            156 MAO-bin.000175
+-a----         2022/5/13     23:12         188269 MAO-bin.000176
+-a----         2022/5/14     19:45            156 MAO-bin.000177
+-a----         2022/5/21     12:56         925670 MAO-bin.000178
+-a----         2022/5/22     20:07         189888 MAO-bin.000179
+-a----         2022/5/22     23:33            156 MAO-bin.000180
+-a----         2022/5/23     12:14            156 MAO-bin.000181
+-a----         2022/5/23     22:24            156 MAO-bin.000182
+-a----         2022/5/24      9:55            156 MAO-bin.000183
+-a----         2022/5/25     19:22            156 MAO-bin.000184
+-a----         2022/5/26     16:29            156 MAO-bin.000185
+-a----         2022/5/27      9:46            156 MAO-bin.000186
+-a----         2022/5/28     13:00            156 MAO-bin.000187
+-a----         2022/5/29     19:44            156 MAO-bin.000188
+-a----         2022/5/30     21:47            156 MAO-bin.000189
+-a----         2022/5/31     19:14            156 MAO-bin.000190
+-a----          2022/6/1     12:55            156 MAO-bin.000191
+-a----          2022/6/3     19:24          77277 MAO-bin.000192
+-a----          2022/6/4     12:22            156 MAO-bin.000193
+-a----          2022/6/8     12:24           1296 MAO-bin.000194
+-a----          2022/6/8     19:23            372 MAO-bin.000195
+-a----          2022/6/8     20:49            179 MAO-bin.000196
+-a----          2022/6/9     17:36            179 MAO-bin.000197
+-a----         2022/6/10     15:39            179 MAO-bin.000198
+-a----         2022/6/11     12:17           6124 MAO-bin.000199
+-a----         2022/6/11     12:18            156 MAO-bin.000200
+-a----         2022/6/11     12:18            442 MAO-bin.index
+-a----         2022/6/11     12:18          39001 MAO-slow.log
+-a----         2022/6/13     12:40         395416 MAO.err
+-a----         2022/6/11     12:18              5 mao.pid
+-a----         2022/6/13     12:47       26214400 mysql.ibd
+-a----        2021/11/24     16:56           1676 private_key.pem
+-a----        2021/11/24     16:56            452 public_key.pem
+-a----        2021/11/24     16:56           1112 server-cert.pem
+-a----        2021/11/24     16:56           1676 server-key.pem
+-a----         2022/6/13     12:47       16777216 undo_001
+-a----         2022/6/13     12:47       16777216 undo_002
+
+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+
+
+## 二进制日志
+
+二进制日志（BINLOG）记录了所有的 DDL（数据定义语言）语句和 DML（数据操纵语言）语句，但 不包括数据查询（SELECT、SHOW）语句。
+
+
+
+作用：
+
+* 灾难时的数据恢复
+* MySQL的主从复制
+
+
+
+查看：
+
+```sh
+show variables like '%log_bin%';
+```
+
+
+
+* log_bin_basename：当前数据库服务器的binlog日志的基础名称(前缀)，具体的binlog文 件名需要再该basename的基础上加上编号(编号从000001开始)。
+* log_bin_index：binlog的索引文件，里面记录了当前服务器关联的binlog文件有哪些。
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> mysql -u root -p
+Enter password: ********
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 40
+Server version: 8.0.27 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show variables like '%log_bin%';
++---------------------------------+----------------------------------------------------------+
+| Variable_name                   | Value                                                    |
++---------------------------------+----------------------------------------------------------+
+| log_bin                         | ON                                                       |
+| log_bin_basename                | C:\ProgramData\MySQL\MySQL Server 8.0\Data\MAO-bin       |
+| log_bin_index                   | C:\ProgramData\MySQL\MySQL Server 8.0\Data\MAO-bin.index |
+| log_bin_trust_function_creators | OFF                                                      |
+| log_bin_use_v1_row_events       | OFF                                                      |
+| sql_log_bin                     | ON                                                       |
++---------------------------------+----------------------------------------------------------+
+6 rows in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+```sh
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data> ls
+
+
+    目录: C:\ProgramData\MySQL\MySQL Server 8.0\Data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/11     12:18                #innodb_temp
+d-----          2022/6/2     15:22                hotel
+d-----        2021/11/24     16:56                mysql
+d-----        2021/11/24     16:56                performance_schema
+d-----        2021/11/24     16:58                sakila
+d-----         2022/1/27     21:16                student
+d-----         2022/2/25     21:15                student1
+d-----         2022/1/17     23:11                student_test
+d-----        2021/11/24     16:56                sys
+d-----         2022/5/15     21:23                test
+d-----         2022/2/26     11:32                tx
+d-----        2021/11/24     16:58                world
+-a----         2022/6/13     12:47         196608 #ib_16384_0.dblwr
+-a----         2022/6/10     21:27        8585216 #ib_16384_1.dblwr
+-a----        2021/11/24     16:56             56 auto.cnf
+-a----        2021/11/24     16:56           1680 ca-key.pem
+-a----        2021/11/24     16:56           1112 ca.pem
+-a----        2021/11/24     16:56           1112 client-cert.pem
+-a----        2021/11/24     16:56           1680 client-key.pem
+-a----         2022/6/13     12:47       12582912 ibdata1
+-a----         2022/6/11     12:20       12582912 ibtmp1
+-a----         2022/6/11     12:17           1786 ib_buffer_pool
+-a----         2022/6/13     12:47       50331648 ib_logfile0
+-a----         2022/6/13     12:47       50331648 ib_logfile1
+-a----         2022/5/12     17:26            156 MAO-bin.000175
+-a----         2022/5/13     23:12         188269 MAO-bin.000176
+-a----         2022/5/14     19:45            156 MAO-bin.000177
+-a----         2022/5/21     12:56         925670 MAO-bin.000178
+-a----         2022/5/22     20:07         189888 MAO-bin.000179
+-a----         2022/5/22     23:33            156 MAO-bin.000180
+-a----         2022/5/23     12:14            156 MAO-bin.000181
+-a----         2022/5/23     22:24            156 MAO-bin.000182
+-a----         2022/5/24      9:55            156 MAO-bin.000183
+-a----         2022/5/25     19:22            156 MAO-bin.000184
+-a----         2022/5/26     16:29            156 MAO-bin.000185
+-a----         2022/5/27      9:46            156 MAO-bin.000186
+-a----         2022/5/28     13:00            156 MAO-bin.000187
+-a----         2022/5/29     19:44            156 MAO-bin.000188
+-a----         2022/5/30     21:47            156 MAO-bin.000189
+-a----         2022/5/31     19:14            156 MAO-bin.000190
+-a----          2022/6/1     12:55            156 MAO-bin.000191
+-a----          2022/6/3     19:24          77277 MAO-bin.000192
+-a----          2022/6/4     12:22            156 MAO-bin.000193
+-a----          2022/6/8     12:24           1296 MAO-bin.000194
+-a----          2022/6/8     19:23            372 MAO-bin.000195
+-a----          2022/6/8     20:49            179 MAO-bin.000196
+-a----          2022/6/9     17:36            179 MAO-bin.000197
+-a----         2022/6/10     15:39            179 MAO-bin.000198
+-a----         2022/6/11     12:17           6124 MAO-bin.000199
+-a----         2022/6/11     12:18            156 MAO-bin.000200
+-a----         2022/6/11     12:18            442 MAO-bin.index
+-a----         2022/6/11     12:18          39001 MAO-slow.log
+-a----         2022/6/13     12:40         395416 MAO.err
+-a----         2022/6/11     12:18              5 mao.pid
+-a----         2022/6/13     12:47       26214400 mysql.ibd
+-a----        2021/11/24     16:56           1676 private_key.pem
+-a----        2021/11/24     16:56            452 public_key.pem
+-a----        2021/11/24     16:56           1112 server-cert.pem
+-a----        2021/11/24     16:56           1676 server-key.pem
+-a----         2022/6/13     12:47       16777216 undo_001
+-a----         2022/6/13     12:47       16777216 undo_002
+
+
+PS C:\ProgramData\MySQL\MySQL Server 8.0\Data>
+```
+
+
+
+
+
+### 格式
+
+| 日志格式 | 含义 |
+| -------- | ---- |
+|STATEMENT |基于SQL语句的日志记录，记录的是SQL语句，对数据进行修改的SQL都会记录在 日志文件中。|
+|ROW |基于行的日志记录，记录的是每一行的数据变更。（默认）|
+|MIXED| 混合了STATEMENT和ROW两种格式，默认采用STATEMENT，在某些特殊情况下会 自动切换为ROW进行记录。|
+
+
+
+查看：
+
+```sh
+show variables like '%binlog_format%'
+```
+
+
+
+```sh
+mysql> show variables like '%binlog_format%';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| binlog_format | ROW   |
++---------------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+### 删除
+
+对于比较繁忙的业务系统，每天生成的binlog数据巨大，如果长时间不清除，将会占用大量磁盘空 间。可以通过以下几种方式清理日志：
+
+* reset master：删除全部 binlog 日志，删除之后，日志编号，将 从 binlog.000001重新开始
+* purge master logs to 'binlog.*' ：删除 * 编号之前的所有日志
+* purge master logs before 'yyyy-mm-dd hh24:mi:ss' ：删除日志为 "yyyy-mm-dd hh24:mi:ss" 之前 产生的所有日志
+
+
+
+也可以在mysql的配置文件中配置二进制日志的过期时间，设置了之后，二进制日志过期会自动删除。
+
+```sh
+show variables like '%binlog_expire_logs_seconds%';
+```
+
+
+
+```sh
+mysql> show variables like '%binlog_expire_logs_seconds%';
++----------------------------+---------+
+| Variable_name              | Value   |
++----------------------------+---------+
+| binlog_expire_logs_seconds | 2592000 |
++----------------------------+---------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+## 查询日志
+
+查询日志中记录了客户端的所有操作语句，而二进制日志不包含查询数据的SQL语句。默认情况下，查询日志是未开启的
+
+开启查询日志：
+
+更改my.conf文件
+
+```sh
+#该选项用来开启查询日志 ， 可选值 ： 0 或者 1 ； 0 代表关闭， 1 代表开启
+general_log=1
+#设置日志的文件名 ， 如果没有指定， 默认的文件名为 host_name.log
+general_log_file=mysql_query.log
+```
+
+
+
+
+
+## 慢查询日志
+
+慢查询日志记录了所有执行时间超过参数 long_query_time 设置值并且扫描记录数不小于 min_examined_row_limit 的所有的SQL语句的日志，默认未开启。long_query_time 默认为10 秒，最小为 0， 精度可以到微秒。
+
+开启慢查询日志：
+
+更改my.conf文件
+
+```sh
+#慢查询日志
+slow_query_log=1
+#执行时间参数
+long_query_time=3
+```
+
+
+
+默认情况下，不会记录管理语句，也不会记录不使用索引进行查找的查询。可以使用 log_slow_admin_statements和 更改此行为 log_queries_not_using_indexes
+
+```sh
+#记录执行较慢的管理语句
+log_slow_admin_statements =1
+#记录执行较慢的未使用索引的语句
+log_queries_not_using_indexes = 1
+```
+
+
+
+
+
+
+
+# 主从复制
+
+主从复制是指将主数据库的 DDL 和 DML 操作通过二进制日志传到从库服务器中，然后在从库上对这 些日志重新执行（也叫重做），从而使得从库和主库的数据保持同步。
+
+MySQL支持一台主库同时向多台从库进行复制， 从库同时也可以作为其他从服务器的主库，实现链状 复制。
+
+主从复制的优点：
+
+* 主库出现问题，可以快速切换到从库提供服务。 
+* 实现读写分离，降低主库的访问压力。 
+* 可以在从库中执行备份，以避免备份期间影响主库服务。
+
+
+
+## 原理
+
+* Master 主库在事务提交时，会把数据变更记录在二进制日志文件 Binlog 中。
+* slave节点的 IO线程从库读取主库的二进制日志文件 Binlog ，写入到从库的中继日志 Relay Log
+* slave节点的SQL线程重做中继日志中的事件，将改变反映它自己的数据。
+
+
+
+## 搭建
+
+使用docker容器，容器名mysql2为master节点，端口号为3308，容器名mysql3为slave节点，端口号为3309
+
+
+
+1. ### 搜索和下载
+
+命令：docker pull mysql
+
+
+
+2. ### 查看是否拉取成功
+
+docker images
+
+
+
+```sh
+PS C:\Users\mao\Desktop> docker images
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+tomcat       latest    c795915cb678   2 weeks ago   680MB
+redis        latest    53aa81e8adfa   2 weeks ago   117MB
+mysql        latest    65b636d5542b   2 weeks ago   524MB
+ubuntu       latest    d2e4e1f51132   6 weeks ago   77.8MB
+PS C:\Users\mao\Desktop>
+```
+
+
+
+3. ### 运行
+
+master节点：
+
+```sh
+docker run -p 3308:3306 --privileged=true --name mysql2 -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+```
+
+
+
+slave节点：
+
+```sh
+docker run -d -p 3309:3306 --privileged=true -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
+```
+
+
+
+使用了容器数据卷，映射到了主机的H:/Docker/mysql2和H:/Docker/mysql3目录下，密码为123456
+
+
+
+```sh
+PS C:\Users\mao\Desktop> docker run -p 3308:3306 --privileged=true --name mysql2 -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+24ee3e986397d792a72edca86c0bed0e369ed86d8458780465603af783e28b2e
+PS C:\Users\mao\Desktop> docker run -d -p 3309:3306 --privileged=true -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
+81902b3cfdc4cd424993f83ff2d9f530f5936628afec398f8ee128a915184ce1
+PS C:\Users\mao\Desktop>
+```
+
+
+
+4. ### 验证是否启动成功
+
+docker ps -a
+
+
+
+```sh
+PS C:\Users\mao\Desktop> docker ps -a
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS                      PORTS                               NAMES
+81902b3cfdc4   mysql     "docker-entrypoint.s…"   24 seconds ago   Up 24 seconds               33060/tcp, 0.0.0.0:3309->3306/tcp   mysql3
+24ee3e986397   mysql     "docker-entrypoint.s…"   38 seconds ago   Up 37 seconds               33060/tcp, 0.0.0.0:3308->3306/tcp   mysql2
+2d379d342bb6   mysql     "docker-entrypoint.s…"   25 hours ago     Exited (0) 53 minutes ago                                       mysql1
+3ca156e4541d   tomcat    "catalina.sh run"        26 hours ago     Exited (143) 25 hours ago                                       tomcat1
+3948921a6099   redis     "docker-entrypoint.s…"   26 hours ago     Exited (0) 25 hours ago                                         redis1
+PS C:\Users\mao\Desktop>
+```
+
+
+
+
+
+5. ### 验证容器数据卷是否创建成功
+
+```sh
+PS H:\Docker> ls
+
+
+    目录: H:\Docker
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/13     22:40                mysql
+d-----         2022/6/14     13:24                mysql2
+d-----         2022/6/14     13:24                mysql3
+d-----         2022/6/13     21:35                redis
+d-----         2022/6/13     23:05                tomcat
+
+
+PS H:\Docker> cd mysql2
+PS H:\Docker\mysql2> ls
+
+
+    目录: H:\Docker\mysql2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/14     13:24                conf
+da----         2022/6/14     13:26                data
+d-----         2022/6/14     13:24                log
+
+
+PS H:\Docker\mysql2> cd data
+PS H:\Docker\mysql2\data> ls
+
+
+    目录: H:\Docker\mysql2\data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/14     13:26                #innodb_temp
+d-----         2022/6/14     13:24                mysql
+d-----         2022/6/14     13:24                performance_schema
+d-----         2022/6/14     13:24                sys
+-a----         2022/6/14     13:26         196608 #ib_16384_0.dblwr
+-a----         2022/6/14     13:24        8585216 #ib_16384_1.dblwr
+-a----         2022/6/14     13:24             56 auto.cnf
+-a----         2022/6/14     13:26        3116922 binlog.000001
+-a----         2022/6/14     13:26            157 binlog.000002
+-a----         2022/6/14     13:26             32 binlog.index
+-a----         2022/6/14     13:24           1676 ca-key.pem
+-a----         2022/6/14     13:24           1112 ca.pem
+-a----         2022/6/14     13:24           1112 client-cert.pem
+-a----         2022/6/14     13:24           1676 client-key.pem
+-a----         2022/6/14     13:26       12582912 ibdata1
+-a----         2022/6/14     13:26       12582912 ibtmp1
+-a----         2022/6/14     13:26           5730 ib_buffer_pool
+-a----         2022/6/14     13:26       50331648 ib_logfile0
+-a----         2022/6/14     13:24       50331648 ib_logfile1
+-a----         2022/6/14     13:26       31457280 mysql.ibd
+-a----         2022/6/14     13:24           1676 private_key.pem
+-a----         2022/6/14     13:24            452 public_key.pem
+-a----         2022/6/14     13:24           1112 server-cert.pem
+-a----         2022/6/14     13:24           1676 server-key.pem
+-a----         2022/6/14     13:26       16777216 undo_001
+-a----         2022/6/14     13:26       16777216 undo_002
+
+
+```
+
+
+
+```sh
+PS H:\Docker> cd mysql3
+PS H:\Docker\mysql3> ls
+
+
+    目录: H:\Docker\mysql3
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/14     13:24                conf
+da----         2022/6/14     13:27                data
+d-----         2022/6/14     13:24                log
+
+
+PS H:\Docker\mysql3> cd data
+PS H:\Docker\mysql3\data> ls
+
+
+    目录: H:\Docker\mysql3\data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/6/14     13:27                #innodb_temp
+d-----         2022/6/14     13:25                mysql
+d-----         2022/6/14     13:25                performance_schema
+d-----         2022/6/14     13:26                sys
+-a----         2022/6/14     13:29         196608 #ib_16384_0.dblwr
+-a----         2022/6/14     13:24        8585216 #ib_16384_1.dblwr
+-a----         2022/6/14     13:24             56 auto.cnf
+-a----         2022/6/14     13:27        3116922 binlog.000001
+-a----         2022/6/14     13:27            157 binlog.000002
+-a----         2022/6/14     13:27             32 binlog.index
+-a----         2022/6/14     13:25           1676 ca-key.pem
+-a----         2022/6/14     13:25           1112 ca.pem
+-a----         2022/6/14     13:25           1112 client-cert.pem
+-a----         2022/6/14     13:25           1680 client-key.pem
+-a----         2022/6/14     13:27       12582912 ibdata1
+-a----         2022/6/14     13:27       12582912 ibtmp1
+-a----         2022/6/14     13:27           5730 ib_buffer_pool
+-a----         2022/6/14     13:29       50331648 ib_logfile0
+-a----         2022/6/14     13:24       50331648 ib_logfile1
+-a----         2022/6/14     13:27       31457280 mysql.ibd
+-a----         2022/6/14     13:25           1680 private_key.pem
+-a----         2022/6/14     13:25            452 public_key.pem
+-a----         2022/6/14     13:25           1112 server-cert.pem
+-a----         2022/6/14     13:25           1676 server-key.pem
+-a----         2022/6/14     13:29       16777216 undo_001
+-a----         2022/6/14     13:29       16777216 undo_002
+
+
+PS H:\Docker\mysql3\data>
+```
+
+
+
+6. ### 创建配置文件
+
+在H:\Docker\mysql2\conf下创建my.conf
+
+在H:\Docker\mysql3\conf下创建my.conf
+
+
+
+输入以下内容：
+
+H:\Docker\mysql2\conf：
+
+```sh
+[mysqld]
+## 设置server_id，同一局域网中需要唯一
+server_id=101
+## 指定不需要同步的数据库名称
+binlog-ignore-db=mysql
+## 开启二进制日志功能
+log-bin=mall-mysql-bin
+## 设置二进制日志使用内存大小（事务
+binlog_cache_size=1M
+## 设置使用的二进制日志格式（mixed,statement,row）
+binlog_format=mixed
+## 二进制日志过期清理时间。默认值为0，表示不自动清理。
+expire_logs_days=7
+## 跳过主从复制中遇到的所有错误或指定类型的错误，避免slave端复制中断。
+## 如：1062错误是指一些主键重复，1032错误是因为主从数据库数据不一致
+#是否只读,1 代表只读, 0 代表读写
+read-only=0
+slave_skip_errors=1062
+default_character_set=utf8
+collation_server = utf8_general_ci
+character_set_server = utf8
+
+```
+
+
+
+H:\Docker\mysql3\conf：
+
+```sh
+[mysqld]
+## 设置server_id，同一局域网中需要唯一
+server_id=102
+## 指定不需要同步的数据库名称
+binlog-ignore-db=mysql
+## 开启二进制日志功能，以备Slave作为其它数据库实例的Master时使用
+log-bin=mall-mysql-slave1-bin
+## 设置二进制日志使用内存大小（事务）
+binlog_cache_size=1M
+## 设置使用的二进制日志格式（mixed,statement,row）
+binlog_format=mixed
+## 二进制日志过期清理时间。默认值为0，表示不自动清理。
+expire_logs_days=7
+## 跳过主从复制中遇到的所有错误或指定类型的错误，避免slave端复制中断。
+## 如：1062错误是指一些主键重复，1032错误是因为主从数据库数据不一致
+slave_skip_errors=1062
+## relay_log配置中继日志
+relay_log=mall-mysql-relay-bin
+## log_slave_updates表示slave将复制事件写进自己的二进制日志
+log_slave_updates=1  
+## slave设置为只读（具有super权限的用户除外）
+read_only=1
+default_character_set=utf8
+collation_server = utf8_general_ci
+character_set_server = utf8
+
+```
+
+
+
+7. ### 重启服务器
+
+
+
+docker restart mysql2
+
+docker restart mysql3
+
+
+
+```sh
+PS C:\Users\mao\Desktop> docker restart mysql2
+mysql2
+PS C:\Users\mao\Desktop> docker restart mysql3
+mysql3
+PS C:\Users\mao\Desktop> docker ps -a
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS                      PORTS                               NAMES
+81902b3cfdc4   mysql     "docker-entrypoint.s…"   2 minutes ago   Up 10 seconds               33060/tcp, 0.0.0.0:3309->3306/tcp   mysql3
+24ee3e986397   mysql     "docker-entrypoint.s…"   2 minutes ago   Up 23 seconds               33060/tcp, 0.0.0.0:3308->3306/tcp   mysql2
+2d379d342bb6   mysql     "docker-entrypoint.s…"   25 hours ago    Exited (0) 55 minutes ago                                       mysql1
+3ca156e4541d   tomcat    "catalina.sh run"        26 hours ago    Exited (143) 25 hours ago                                       tomcat1
+3948921a6099   redis     "docker-entrypoint.s…"   26 hours ago    Exited (0) 25 hours ago                                         redis1
+PS C:\Users\mao\Desktop>
+```
+
+
+
+8. ### 登录master节点
+
+mysql -P 3308 -u root -p
+
+密码为123456
+
+```sh
+C:\Users\mao>mysql -P 3308 -u root -p
+Enter password: ******
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.29 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+
+
+
+9. ### 查看二进制日志坐标
+
+show master status;
+
+
+
+```sh
+mysql> show master status;
++---------------+----------+--------------+------------------+-------------------+
+| File          | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++---------------+----------+--------------+------------------+-------------------+
+| binlog.000002 |      157 |              |                  |                   |
++---------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+mysql>
+```
+
+
+
+说明：
+
+*  file : 从哪个日志文件开始推送日志文件 
+* position ： 从哪个位置开始推送日志 
+* binlog_ignore_db : 指定不需要同步的数据库
+
+
+
+### 10.创建slave账户
+
+```sh
+CREATE USER 'slave'@'%' IDENTIFIED BY '123456';
+```
+
+授予权限
+
+```sh
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave'@'%';
+```
+
+
+
+```sh
+mysql> CREATE USER 'slave'@'%' IDENTIFIED BY '123456';
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave'@'%';
+Query OK, 0 rows affected (0.06 sec)
+
+mysql>
+```
+
+
+
+
+
+### 10 .登录slave节点
+
+mysql -P 3309 -u root -p
+
+或者进入容器：docker exec -it mysql3 /bin/bash
+
+再使用mysql -u root -p
+
+密码为123456
+
+
+
+```sh
+PS C:\Users\mao\Desktop> docker exec -it mysql3 /bin/bash
+root@81902b3cfdc4:/# mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.29 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2022, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+
+
+
+11. ### 登录slave节点设置主从配置
+
+
+
+```sh
+CHANGE REPLICATION SOURCE TO SOURCE_HOST='113.221.210.40', SOURCE_USER='slave',SOURCE_PORT=3308,
+SOURCE_PASSWORD='123456', SOURCE_LOG_FILE='binlog.000002',
+SOURCE_LOG_POS=157;
+```
+
+
+
+8.0.23之前：
+
+```sh
+CHANGE MASTER TO MASTER_HOST='113.221.210.40', MASTER_USER='slave',MASTER_PORT=3308,
+MASTER_PASSWORD='123456', MASTER_LOG_FILE='binlog.000002',
+MASTER_LOG_POS=157;
+```
+
+
+
+| 参数名 | 含义 | 8.0.23之前 |
+| ------ | ---- | ---------- |
+|SOURCE_HOST| 主库IP地址| MASTER_HOST |
+|SOURCE_USER| 连接主库的用户名 |MASTER_USER|
+|SOURCE_PASSWORD |连接主库的密码| MASTER_PASSWORD|
+|SOURCE_LOG_FILE| binlog日志文件名| MASTER_LOG_FILE |
+|SOURCE_LOG_POS| binlog日志文件位置 |MASTER_LOG_POS|
+|SOURCE_PORT|端口号|MASTER_PORT|
+
+注意：binlog日志文件名和binlog日志文件位置要和master节点查出来的数据要一致，命令是show master status
+
+
+
+```sh
+mysql> CHANGE REPLICATION SOURCE TO SOURCE_HOST='113.221.210.40', SOURCE_USER='slave',SOURCE_PORT=3308,
+    -> SOURCE_PASSWORD='123456', SOURCE_LOG_FILE='binlog.000002',
+    -> SOURCE_LOG_POS=157;
+Query OK, 0 rows affected, 2 warnings (0.41 sec)
+
+mysql>
+```
+
+
+
+### 12. 开启同步操作
+
+在slave节点中
+
+输入以下命令：
+
+```sh
+start replica; 
+```
+
+8.0.23之前：
+
+```sh
+start slave;
+```
+
+
+
+```sh
+mysql> start slave;
+Query OK, 0 rows affected, 1 warning (0.17 sec)
+
+mysql>
+```
+
+
+
+
+
+13. ### 查看主从同步状态
+
+在slave节点中
+
+输入以下命令：
+
+```sh
+show replica status;
+```
+
+8.0.23之前：
+
+```sh
+show slave status;
+```
+
+或者
+
+```sh
+show replica status \G;
+```
+
+```sh
+show slave status \G;
+```
+
+
+
+
+
+```sh
+
+```
+
+
+
+如果Slave_IO_Running和Slave_SQL_Running都为yes，则为成功
+
+
+
+14. ### 测试
+
+
+
+在master节点，创建数据库，创建表，插入数据
+
+```sh
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.01 sec)
+
+mysql> create database db1;
+Query OK, 1 row affected (0.09 sec)
+
+mysql> use db1;
+Database changed
+mysql> create table test(id int , name char(5));
+Query OK, 0 rows affected (0.37 sec)
+
+mysql> insert into test values(1,"abc");
+Query OK, 1 row affected (0.11 sec)
+
+mysql> insert into test values(1,"张三");
+Query OK, 1 row affected (0.07 sec)
+
+mysql> select * from test;
++------+------+
+| id   | name |
++------+------+
+|    1 | abc  |
+|    1 | 张三 |
++------+------+
+2 rows in set (0.00 sec)
+
+mysql>
+```
+
+
+
+
+
+
+
+# 分库分表
+
+
+
+## 拆分策略
+
+垂直拆分和水平拆分
+
+
+
+### 垂直拆分
+
+#### 垂直分库
+
+以表为依据，根据业务将不同表拆分到不同库中。
+
+* 每个库的表结构都不一样。 
+* 每个库的数据也不一样。 
+* 所有库的并集是全量数据。
+
+
+
+#### 垂直分表
+
+以字段为依据，根据字段属性将不同字段拆分到不同表中。
+
+* 每个表的结构都不一样。 
+* 每个表的数据也不一样，一般通过一列（主键/外键）关联。
+* 所有表的并集是全量数据。
+
+
+
+### 水平拆分
+
+#### 水平分库
+
+以字段为依据，按照一定策略，将一个库的数据拆分到多个库中。
+
+* 每个库的表结构都一样。 
+* 每个库的数据都不一样。 
+* 所有库的并集是全量数据。
+
+
+
+#### 水平分表
+
+以字段为依据，按照一定策略，将一个表的数据拆分到多个表中。
+
+* 每个表的表结构都一样。
+* 每个表的数据都不一样。 
+* 所有表的并集是全量数据。
+
+
+
+## 实现技术
+
+* shardingJDBC：基于AOP原理，在应用程序中对本地执行的SQL进行拦截，解析、改写、路由处理。需要自行编码配置实现，只支持java语言，性能较高。 
+* MyCat：数据库分库分表中间件，不用调整代码即可实现分库分表，支持多种语言，性能不及前者
+
+
+
+
+
+# MyCat
+
+## 下载
+
+下载地址：http://dl.mycat.org.cn/
+
+## 目录结构
+
+* bin : 存放可执行文件，用于启动停止
+* mycat conf：存放mycat的配置文件 
+* lib：存放mycat的项目依赖包（jar）
+* logs：存放mycat的日志文件
+
+
+
+## 启动
+
+启动
+
+ bin/mycat start 
+
+停止
+
+ bin/mycat stop
+
+
+
+端口号 8066
+
+
+
+## MyCat配置
+
+### schema.xml
+
