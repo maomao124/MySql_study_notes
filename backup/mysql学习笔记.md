@@ -4521,13 +4521,13 @@ MySQL支持一台主库同时向多台从库进行复制， 从库同时也可�
 
 
 
-1. ### 搜索和下载
+### 1. 搜索和下载
 
 命令：docker pull mysql
 
 
 
-2. ### 查看是否拉取成功
+### 2. 查看是否拉取成功
 
 docker images
 
@@ -4545,7 +4545,7 @@ PS C:\Users\mao\Desktop>
 
 
 
-3. ### 运行
+### 3.  运行
 
 master节点：
 
@@ -4577,7 +4577,7 @@ PS C:\Users\mao\Desktop>
 
 
 
-4. ### 验证是否启动成功
+### 4. 验证是否启动成功
 
 docker ps -a
 
@@ -4598,7 +4598,7 @@ PS C:\Users\mao\Desktop>
 
 
 
-5. ### 验证容器数据卷是否创建成功
+### 5.  验证容器数据卷是否创建成功
 
 ```sh
 PS H:\Docker> ls
@@ -4728,7 +4728,7 @@ PS H:\Docker\mysql3\data>
 
 
 
-6. ### 创建配置文件
+### 6.  创建配置文件
 
 在H:\Docker\mysql2\conf下创建my.conf
 
@@ -4800,7 +4800,7 @@ character_set_server = utf8
 
 
 
-7. ### 重启服务器
+### 7.  重启服务器
 
 
 
@@ -4827,7 +4827,7 @@ PS C:\Users\mao\Desktop>
 
 
 
-8. ### 登录master节点
+### 8.  登录master节点
 
 mysql -P 3308 -u root -p
 
@@ -4853,7 +4853,7 @@ mysql>
 
 
 
-9. ### 查看二进制日志坐标
+### 9.  查看二进制日志坐标
 
 show master status;
 
@@ -4909,7 +4909,7 @@ mysql>
 
 
 
-### 10 .登录slave节点
+### 11 .登录slave节点
 
 mysql -P 3309 -u root -p
 
@@ -4942,7 +4942,7 @@ mysql>
 
 
 
-11. ### 登录slave节点设置主从配置
+### 12.  登录slave节点设置主从配置
 
 
 
@@ -4988,7 +4988,7 @@ mysql>
 
 
 
-### 12. 开启同步操作
+### 13. 开启同步操作
 
 在slave节点中
 
@@ -5017,7 +5017,7 @@ mysql>
 
 
 
-13. ### 查看主从同步状态
+### 14.  查看主从同步状态
 
 在slave节点中
 
@@ -5057,7 +5057,7 @@ show slave status \G;
 
 
 
-14. ### 测试
+### 15.  测试
 
 
 
@@ -5204,4 +5204,524 @@ mysql>
 ## MyCat配置
 
 ### schema.xml
+
+schema.xml 作为MyCat中最重要的配置文件之一 , 涵盖了MyCat的逻辑库 、 逻辑表 、 分片规 则、分片节点及数据源的配置。
+
+标签：
+
+* schema标签 
+* datanode标签 
+* datahost标签
+
+
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+	<schema name="TESTDB" checkSQLschema="true" sqlMaxLimit="100" randomDataNode="dn1">
+		<!-- auto sharding by id (long) -->
+		<!--splitTableNames 启用<table name 属性使用逗号分割配置多个表,即多个表使用这个配置-->
+<!--fetchStoreNodeByJdbc 启用ER表使用JDBC方式获取DataNode-->
+		<table name="customer" primaryKey="id" dataNode="dn1,dn2" rule="sharding-by-intfile" autoIncrement="true" fetchStoreNodeByJdbc="true">
+			<childTable name="customer_addr" primaryKey="id" joinKey="customer_id" parentKey="id"> </childTable>
+		</table>
+		<!-- <table name="oc_call" primaryKey="ID" dataNode="dn1$0-743" rule="latest-month-calldate"
+			/> -->
+	</schema>
+    
+    
+    
+	<!-- <dataNode name="dn1$0-743" dataHost="localhost1" database="db$0-743"
+		/> -->
+	<dataNode name="dn1" dataHost="localhost1" database="db1" />
+	<dataNode name="dn2" dataHost="localhost1" database="db2" />
+	<dataNode name="dn3" dataHost="localhost1" database="db3" />
+	<!--<dataNode name="dn4" dataHost="sequoiadb1" database="SAMPLE" />
+	 <dataNode name="jdbc_dn1" dataHost="jdbchost" database="db1" />
+	<dataNode	name="jdbc_dn2" dataHost="jdbchost" database="db2" />
+	<dataNode name="jdbc_dn3" 	dataHost="jdbchost" database="db3" /> -->
+    
+    
+    
+	<dataHost name="localhost1" maxCon="1000" minCon="10" balance="0"
+			  writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<!-- can have multi write hosts -->
+		<writeHost host="hostM1" url="jdbc:mysql://localhost:3306" user="root"
+				   password="root">
+		</writeHost>
+		<!-- <writeHost host="hostM2" url="localhost:3316" user="root" password="123456"/> -->
+	</dataHost>
+	<!--
+		<dataHost name="sequoiadb1" maxCon="1000" minCon="1" balance="0" dbType="sequoiadb" dbDriver="jdbc">
+		<heartbeat> 		</heartbeat>
+		 <writeHost host="hostM1" url="sequoiadb://1426587161.dbaas.sequoialab.net:11920/SAMPLE" user="jifeng" 	password="jifeng"></writeHost>
+		 </dataHost>
+
+	  <dataHost name="oracle1" maxCon="1000" minCon="1" balance="0" writeType="0" 	dbType="oracle" dbDriver="jdbc"> <heartbeat>select 1 from dual</heartbeat>
+		<connectionInitSql>alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'</connectionInitSql>
+		<writeHost host="hostM1" url="jdbc:oracle:thin:@127.0.0.1:1521:nange" user="base" 	password="123456" > </writeHost> </dataHost>
+
+		<dataHost name="jdbchost" maxCon="1000" 	minCon="1" balance="0" writeType="0" dbType="mongodb" dbDriver="jdbc">
+		<heartbeat>select 	user()</heartbeat>
+		<writeHost host="hostM" url="mongodb://192.168.0.99/test" user="admin" password="123456" ></writeHost> </dataHost>
+
+		<dataHost name="sparksql" maxCon="1000" minCon="1" balance="0" dbType="spark" dbDriver="jdbc">
+		<heartbeat> </heartbeat>
+		 <writeHost host="hostM1" url="jdbc:hive2://feng01:10000" user="jifeng" 	password="jifeng"></writeHost> </dataHost> -->
+
+	<!-- <dataHost name="jdbchost" maxCon="1000" minCon="10" balance="0" dbType="mysql"
+		dbDriver="jdbc"> <heartbeat>select user()</heartbeat> <writeHost host="hostM1"
+		url="jdbc:mysql://localhost:3306" user="root" password="123456"> </writeHost>
+		</dataHost> -->
+</mycat:schema>
+```
+
+
+
+
+
+#### schema标签
+
+
+
+```xml
+<schema name="TESTDB" checkSQLschema="true" sqlMaxLimit="100" randomDataNode="dn1">
+		<!-- auto sharding by id (long) -->
+		<!--splitTableNames 启用<table name 属性使用逗号分割配置多个表,即多个表使用这个配置-->
+<!--fetchStoreNodeByJdbc 启用ER表使用JDBC方式获取DataNode-->
+		<table name="customer" primaryKey="id" dataNode="dn1,dn2" rule="sharding-by-intfile" autoIncrement="true" fetchStoreNodeByJdbc="true">
+			<childTable name="customer_addr" primaryKey="id" joinKey="customer_id" parentKey="id"> </childTable>
+		</table>
+		<!-- <table name="oc_call" primaryKey="ID" dataNode="dn1$0-743" rule="latest-month-calldate"
+			/> -->
+	</schema>
+```
+
+
+
+schema 标签用于定义 MyCat实例中的逻辑库 , 一个MyCat实例中, 可以有多个逻辑库 , 可以通 过 schema 标签来划分不同的逻辑库。MyCat中的逻辑库的概念，等同于MySQL中的database概念 , 需要操作某个逻辑库下的表时, 也需要切换逻辑库(use xxx)。
+
+属性：
+
+* name：指定自定义的逻辑库库名 
+* checkSQLschema：在SQL语句操作时指定了数据库名称，执行时是否自动去除；true：自动去 除，false：不自动去除 
+* sqlMaxLimit：如果未指定limit进行查询，列表查询模式查询多少条记录
+
+
+
+table 标签定义了MyCat中逻辑库schema下的逻辑表 , 所有需要拆分的表都需要在table标签中定义 
+
+属性：
+
+* name：定义逻辑表表名，在该逻辑库下唯一 
+* dataNode：定义逻辑表所属的dataNode，该属性需要与dataNode标签中name对应；多个 dataNode逗号分隔 
+* rule：分片规则的名字，分片规则名字是在rule.xml中定义的 
+* primaryKey：逻辑表对应真实表的主键 
+* type：逻辑表的类型，目前逻辑表只有全局表和普通表，如果未配置，就是普通表；全局表，配置为 global
+* fetchStoreNodeByJdbc：启用ER表使用JDBC方式获取DataNode
+
+
+
+
+
+####  datanode标签
+
+
+
+```xml
+<!-- <dataNode name="dn1$0-743" dataHost="localhost1" database="db$0-743"
+		/> -->
+	<dataNode name="dn1" dataHost="localhost1" database="db1" />
+	<dataNode name="dn2" dataHost="localhost1" database="db2" />
+	<dataNode name="dn3" dataHost="localhost1" database="db3" />
+	<!--<dataNode name="dn4" dataHost="sequoiadb1" database="SAMPLE" />
+	 <dataNode name="jdbc_dn1" dataHost="jdbchost" database="db1" />
+	<dataNode	name="jdbc_dn2" dataHost="jdbchost" database="db2" />
+	<dataNode name="jdbc_dn3" 	dataHost="jdbchost" database="db3" /> -->
+```
+
+
+
+属性：
+
+* name：定义数据节点名称 
+* dataHost：数据库实例主机名称，引用自 dataHost 标签中name属性 
+* database：定义分片所属数据库
+
+
+
+
+
+#### datahost标签
+
+
+
+```xml
+<dataHost name="localhost1" maxCon="1000" minCon="10" balance="0"
+			  writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"  slaveThreshold="100">
+		<heartbeat>select user()</heartbeat>
+		<!-- can have multi write hosts -->
+		<writeHost host="hostM1" url="jdbc:mysql://localhost:3306" user="root"
+				   password="root">
+		</writeHost>
+		<!-- <writeHost host="hostM2" url="localhost:3316" user="root" password="123456"/> -->
+	</dataHost>
+```
+
+
+
+该标签在MyCat逻辑库中作为底层标签存在, 直接定义了具体的数据库实例、读写分离、心跳语句。
+
+
+
+属性：
+
+* name：唯一标识，供上层标签使用 
+* maxCon/minCon：最大连接数/最小连接数 
+* balance：负载均衡策略，取值 0,1,2,3 
+* writeType：写操作分发方式（0：写操作转发到第一个writeHost，第一个挂了，切换到第二 个；1：写操作随机分发到配置的writeHost） 
+* dbDriver：数据库驱动，支持 native、jdbc，mysql8.0以后的版本建议使用jdbc
+
+
+
+
+
+### rule.xml
+
+
+
+rule.xml中定义所有拆分表的规则, 在使用过程中可以灵活的使用分片算法, 或者对同一个分片算法 使用不同的参数, 它让分片过程可配置化。主要包含两类标签：tableRule、Function。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mycat:rule SYSTEM "rule.dtd">
+<mycat:rule xmlns:mycat="http://io.mycat/">
+	<tableRule name="rule1">
+		<rule>
+			<columns>id</columns>
+			<algorithm>func1</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="sharding-by-date">
+		<rule>
+			<columns>createTime</columns>
+			<algorithm>partbyday</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="rule2">
+		<rule>
+			<columns>user_id</columns>
+			<algorithm>func1</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="sharding-by-intfile">
+		<rule>
+			<columns>sharding_id</columns>
+			<algorithm>hash-int</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="auto-sharding-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>rang-long</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="mod-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>mod-long</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="sharding-by-murmur">
+		<rule>
+			<columns>id</columns>
+			<algorithm>murmur</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="crc32slot">
+		<rule>
+			<columns>id</columns>
+			<algorithm>crc32slot</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="sharding-by-month">
+		<rule>
+			<columns>create_time</columns>
+			<algorithm>partbymonth</algorithm>
+		</rule>
+	</tableRule>
+	<tableRule name="latest-month-calldate">
+		<rule>
+			<columns>calldate</columns>
+			<algorithm>latestMonth</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="auto-sharding-rang-mod">
+		<rule>
+			<columns>id</columns>
+			<algorithm>rang-mod</algorithm>
+		</rule>
+	</tableRule>
+
+	<tableRule name="jch">
+		<rule>
+			<columns>id</columns>
+			<algorithm>jump-consistent-hash</algorithm>
+		</rule>
+	</tableRule>
+
+    
+    
+    
+	<function name="murmur"
+			  class="io.mycat.route.function.PartitionByMurmurHash">
+		<property name="seed">0</property><!-- 默认是0 -->
+		<property name="count">2</property><!-- 要分片的数据库节点数量，必须指定，否则没法分片 -->
+		<property name="virtualBucketTimes">160</property><!-- 一个实际的数据库节点被映射为这么多虚拟节点，默认是160倍，也就是虚拟节点数是物理节点数的160倍 -->
+		<!-- <property name="weightMapFile">weightMapFile</property> 节点的权重，没有指定权重的节点默认是1。以properties文件的格式填写，以从0开始到count-1的整数值也就是节点索引为key，以节点权重值为值。所有权重值必须是正整数，否则以1代替 -->
+		<!-- <property name="bucketMapPath">/etc/mycat/bucketMapPath</property>
+			用于测试时观察各物理节点与虚拟节点的分布情况，如果指定了这个属性，会把虚拟节点的murmur hash值与物理节点的映射按行输出到这个文件，没有默认值，如果不指定，就不会输出任何东西 -->
+	</function>
+
+	<function name="crc32slot"
+			  class="io.mycat.route.function.PartitionByCRC32PreSlot">
+		<property name="count">2</property><!-- 要分片的数据库节点数量，必须指定，否则没法分片 -->
+	</function>
+	<function name="hash-int"
+			  class="io.mycat.route.function.PartitionByFileMap">
+		<property name="mapFile">partition-hash-int.txt</property>
+	</function>
+	<function name="rang-long"
+			  class="io.mycat.route.function.AutoPartitionByLong">
+		<property name="mapFile">autopartition-long.txt</property>
+	</function>
+	<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+		<!-- how many data nodes -->
+		<property name="count">3</property>
+	</function>
+
+	<function name="func1" class="io.mycat.route.function.PartitionByLong">
+		<property name="partitionCount">8</property>
+		<property name="partitionLength">128</property>
+	</function>
+	<function name="latestMonth"
+			  class="io.mycat.route.function.LatestMonthPartion">
+		<property name="splitOneDay">24</property>
+	</function>
+	<function name="partbymonth"
+			  class="io.mycat.route.function.PartitionByMonth">
+		<property name="dateFormat">yyyy-MM-dd</property>
+		<property name="sBeginDate">2015-01-01</property>
+	</function>
+
+
+	<function name="partbyday"
+			  class="io.mycat.route.function.PartitionByDate">
+		<property name="dateFormat">yyyy-MM-dd</property>
+		<property name="sNaturalDay">0</property>
+		<property name="sBeginDate">2014-01-01</property>
+		<property name="sEndDate">2014-01-31</property>
+		<property name="sPartionDay">10</property>
+	</function>
+
+	<function name="rang-mod" class="io.mycat.route.function.PartitionByRangeMod">
+		<property name="mapFile">partition-range-mod.txt</property>
+	</function>
+
+	<function name="jump-consistent-hash" class="io.mycat.route.function.PartitionByJumpConsistentHash">
+		<property name="totalBuckets">3</property>
+	</function>
+</mycat:rule>
+```
+
+
+
+
+
+
+
+### server.xml
+
+server.xml配置文件包含了MyCat的系统配置信息，主要有两个重要的标签：system、user。
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mycat:server SYSTEM "server.dtd">
+<mycat:server xmlns:mycat="http://io.mycat/">
+    
+    
+	<system>
+	<property name="nonePasswordLogin">0</property> <!-- 0为需要密码登陆、1为不需要密码登陆 ,默认为0，设置为1则需要指定默认账户-->
+	<property name="ignoreUnknownCommand">0</property><!-- 0遇上没有实现的报文(Unknown command:),就会报错、1为忽略该报文，返回ok报文。
+	在某些mysql客户端存在客户端已经登录的时候还会继续发送登录报文,mycat会报错,该设置可以绕过这个错误-->
+	<property name="useHandshakeV10">1</property>
+    <property name="removeGraveAccent">1</property>
+	<property name="useSqlStat">0</property>  <!-- 1为开启实时统计、0为关闭 -->
+	<property name="useGlobleTableCheck">0</property>  <!-- 1为开启全加班一致性检测、0为关闭 -->
+	<property name="sqlExecuteTimeout">300</property>  <!-- SQL 执行超时 单位:秒-->
+		<property name="sequenceHandlerType">1</property>
+	<!--<property name="sequnceHandlerPattern">(?:(\s*next\s+value\s+for\s*MYCATSEQ_(\w+))(,|\)|\s)*)+</property>
+	INSERT INTO `travelrecord` (`id`,user_id) VALUES ('next value for MYCATSEQ_GLOBAL',"xxx");
+	-->
+	<!--必须带有MYCATSEQ_或者 mycatseq_进入序列匹配流程 注意MYCATSEQ_有空格的情况-->
+	<property name="sequnceHandlerPattern">(?:(\s*next\s+value\s+for\s*MYCATSEQ_(\w+))(,|\)|\s)*)+</property>
+	<property name="subqueryRelationshipCheck">false</property> <!-- 子查询中存在关联查询的情况下,检查关联字段中是否有分片字段 .默认 false -->
+	<property name="sequenceHanlderClass">io.mycat.route.sequence.handler.HttpIncrSequenceHandler</property>
+      <!--  <property name="useCompression">1</property>--> <!--1为开启mysql压缩协议-->
+        <!--  <property name="fakeMySQLVersion">5.6.20</property>--> <!--设置模拟的MySQL版本号-->
+	<!-- <property name="processorBufferChunk">40960</property> -->
+	<!-- 
+	<property name="processors">1</property> 
+	<property name="processorExecutor">32</property> 
+	 -->
+        <!--默认为type 0: DirectByteBufferPool | type 1 ByteBufferArena | type 2 NettyBufferPool -->
+		<property name="processorBufferPoolType">0</property>
+		<!--默认是65535 64K 用于sql解析时最大文本长度 -->
+		<!--<property name="maxStringLiteralLength">65535</property>-->
+		<!--<property name="sequenceHandlerType">0</property>-->
+		<!--<property name="backSocketNoDelay">1</property>-->
+		<!--<property name="frontSocketNoDelay">1</property>-->
+		<!--<property name="processorExecutor">16</property>-->
+		<!--
+			<property name="serverPort">8066</property> <property name="managerPort">9066</property> 
+			<property name="idleTimeout">300000</property> <property name="bindIp">0.0.0.0</property>
+			<property name="dataNodeIdleCheckPeriod">300000</property> 5 * 60 * 1000L; //连接空闲检查
+			<property name="frontWriteQueueSize">4096</property> <property name="processors">32</property> -->
+		<!--分布式事务开关，0为不过滤分布式事务，1为过滤分布式事务（如果分布式事务内只涉及全局表，则不过滤），2为不过滤分布式事务,但是记录分布式事务日志-->
+		<property name="handleDistributedTransactions">0</property>
+		
+			<!--
+			off heap for merge/order/group/limit      1开启   0关闭
+		-->
+		<property name="useOffHeapForMerge">0</property>
+
+		<!--
+			单位为m
+		-->
+        <property name="memoryPageSize">64k</property>
+
+		<!--
+			单位为k
+		-->
+		<property name="spillsFileBufferSize">1k</property>
+
+		<property name="useStreamOutput">0</property>
+
+		<!--
+			单位为m
+		-->
+		<property name="systemReserveMemorySize">384m</property>
+
+
+		<!--是否采用zookeeper协调切换  -->
+		<property name="useZKSwitch">false</property>
+
+		<!-- XA Recovery Log日志路径 -->
+		<!--<property name="XARecoveryLogBaseDir">./</property>-->
+
+		<!-- XA Recovery Log日志名称 -->
+		<!--<property name="XARecoveryLogBaseName">tmlog</property>-->
+		<!--如果为 true的话 严格遵守隔离级别,不会在仅仅只有select语句的时候在事务中切换连接-->
+		<property name="strictTxIsolation">false</property>
+		<!--如果为0的话,涉及多个DataNode的catlet任务不会跨线程执行-->
+		<property name="parallExecute">0</property>
+	</system>
+    
+    
+	
+	<!-- 全局SQL防火墙设置 -->
+	<!--白名单可以使用通配符%或着*-->
+	<!--例如<host host="127.0.0.*" user="root"/>-->
+	<!--例如<host host="127.0.*" user="root"/>-->
+	<!--例如<host host="127.*" user="root"/>-->
+	<!--例如<host host="1*7.*" user="root"/>-->
+	<!--这些配置情况下对于127.0.0.1都能以root账户登录-->
+	<!--
+	<firewall>
+	   <whitehost>
+	      <host host="1*7.0.0.*" user="root"/>
+	   </whitehost>
+       <blacklist check="false">
+       </blacklist>
+	</firewall>
+	-->
+
+	<user name="root" defaultAccount="true">
+		<property name="password">123456</property>
+		<property name="schemas">TESTDB</property>
+		<property name="defaultSchema">TESTDB</property>
+		<!--No MyCAT Database selected 错误前会尝试使用该schema作为schema，不设置则为null,报错 -->
+		
+		<!-- 表级 DML 权限设置 -->
+		<!-- 		
+		<privileges check="false">
+			<schema name="TESTDB" dml="0110" >
+				<table name="tb01" dml="0000"></table>
+				<table name="tb02" dml="1111"></table>
+			</schema>
+		</privileges>		
+		 -->
+	</user>
+
+	<user name="user">
+		<property name="password">user</property>
+		<property name="schemas">TESTDB</property>
+		<property name="readOnly">true</property>
+		<property name="defaultSchema">TESTDB</property>
+	</user>
+
+</mycat:server>
+
+```
+
+
+
+
+
+####  system标签
+
+| 属性                      | 取值       |                             含义                             |
+| ------------------------- | ---------- | :----------------------------------------------------------: |
+| charset                   | utf8       |    设置Mycat的字符集, 字符集需要与MySQL的 字符集保持一致     |
+| nonePasswordLogin         | 0,1        | 0为需要密码登陆、1为不需要密码登陆 ,默认 为0，设置为1则需要指定默认账户 |
+| ignoreUnknownCommand      | 0,1        | 0遇上没有实现的报文(Unknown command:),就会报错、1为忽略该报文，返回ok报文。<br/>	在某些mysql客户端存在客户端已经登录的时候还会继续发送登录报文,mycat会报错,该设置可以绕过这个错误 |
+| useSqlStat                | 0,1        | 为开启实时统计、0为关闭。开启之后, MyCat会自动统计SQL语句的执行 情况 ; mysql -h 127.0.0.1 -P 9066 -u root -p 查看MyCat执行的SQL, 执行 效率比较低的SQL , SQL的整体执行情况、读 写比例等 |
+| useGlobleTableCheck       | 0,1        |               1为开启全加班一致性检测、0为关闭               |
+| sqlExecuteTimeout         | 1000       |              SQL语句执行的超时时间 , 单位为 s ;              |
+| sequenceHandlerType       | 0,1,2      | 用来指定Mycat全局序列类型，0 为本地文件，1 为数据库方式，2 为时间戳列方式，默认使用本地文件方式，文件方式主要用于测试 |
+| sequnceHandlerPattern     | 正则表达式 | 必须带有MYCATSEQ或者 mycatseq进入序列 匹配流程 注意MYCATSEQ_有空格的情况 |
+| subqueryRelationshipCheck | true,false | 子查询中存在关联查询的情况下,检查关联字 段中是否有分片字段 默认 false |
+| useCompression            | 0,1        |           开启mysql压缩协议 , 0 : 关闭, 1 : 开 启            |
+| fakeMySQLVersion          | 5.5,5.6    |                    设置模拟的MySQL版本号                     |
+| defaultSqlParser          |            | 由于MyCat的最初版本使用了FoundationDB 的SQL解析器, 在MyCat1.3后增加了Druid 解析器, 所以要设置defaultSqlParser属 性来指定默认的解析器; 解析器有两个 : druidparser 和 fdbparser, 在 MyCat1.4之后,默认是druidparser, fdbparser已经废除了 |
+| processors                | 1,2....    | 指定系统可用的线程数量, 默认值为CPU核心 x 每个核心运行线程数量; processors 会 影响processorBufferPool, processorBufferLocalPercent, processorExecutor属性, 所有, 在性能 调优时, 可以适当地修改processors值 |
+| processorBufferChunk      |            | 指定每次分配Socket Direct Buffer默认 值为4096字节, 也会影响BufferPool长度, 如果一次性获取字节过多而导致buffer不够 用, 则会出现警告, 可以调大该值 |
+| processorExecutor         | 32         | 指定NIOProcessor上共享 businessExecutor固定线程池的大小; MyCat把异步任务交给 businessExecutor 线程池中, 在新版本的MyCat中这个连接池使 用频次不高, 可以适当地把该值调小 |
+| packetHeaderSize          |            |          指定MySQL协议中的报文头长度, 默认4个字 节           |
+| maxPacketSize             |            |      指定MySQL协议可以携带的数据最大大小, 默 认值为16M       |
+| idleTimeout               | 30         | 指定连接的空闲时间的超时长度;如果超时,将 关闭资源并回收, 默认30分钟 |
+| txIsolation               | 1,2,3,4    | 初始化前端连接的事务隔离级别,默认为 REPEATED_READ , 对应数字为3 READ_UNCOMMITED=1; READ_COMMITTED=2; REPEATED_READ=3; SERIALIZABLE=4; |
+| sqlExecuteTimeout         | 300        | 执行SQL的超时时间, 如果SQL语句执行超时, 将关闭连接; 默认300秒; |
+| serverPor                 | 8066       |                定义MyCat的使用端口, 默认8066                 |
+| managerPort               | 9066       |                定义MyCat的管理端口, 默认9066                 |
+| useZKSwitch               | true,false |                  是否采用zookeeper协调切换                   |
+| XARecoveryLogBaseDir      | ./         |                   XA Recovery Log日志路径                    |
+| XARecoveryLogBaseName     | tmlog      |                   XA Recovery Log日志名称                    |
+| strictTxIsolation         | true,false | 如果为 true的话 严格遵守隔离级别,不会在仅仅只有select语句的时候在事务中切换连接 |
+| parallExecute             | 0          |    如果为0的话,涉及多个DataNode的catlet任务不会跨线程执行    |
+
+
+
+
+
+#### firewall
 
