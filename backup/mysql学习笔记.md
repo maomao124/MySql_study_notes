@@ -5723,5 +5723,74 @@ server.xml配置文件包含了MyCat的系统配置信息，主要有两个重�
 
 
 
-#### firewall
+#### firewall标签
+
+全局SQL防火墙设置
+
+```xml
+	<firewall>
+	   <whitehost>
+	      <host host="1*7.0.0.*" user="root"/>
+	   </whitehost>
+       <blacklist check="false">
+       </blacklist>
+	</firewall>
+```
+
+
+
+whitehost：白名单，
+
+
+
+
+
+#### user标签
+
+配置MyCat中的用户、访问密码，以及用户针对于逻辑库、逻辑表的权限信息
+
+```xml
+   <user name="root" defaultAccount="true">
+		<property name="password">123456</property>
+		<property name="schemas">TESTDB</property>
+		<property name="defaultSchema">TESTDB</property>
+		<!--No MyCAT Database selected 错误前会尝试使用该schema作为schema，不设置则为null,报错 -->
+		
+		<!-- 表级 DML 权限设置 -->
+		<!-- 		
+		<privileges check="false">
+			<schema name="TESTDB" dml="0110" >
+				<table name="tb01" dml="0000"></table>
+				<table name="tb02" dml="1111"></table>
+			</schema>
+		</privileges>		
+		 -->
+	</user>
+
+	<user name="user">
+		<property name="password">user</property>
+		<property name="schemas">TESTDB</property>
+		<property name="readOnly">true</property>
+		<property name="defaultSchema">TESTDB</property>
+	</user>
+```
+
+
+
+* name：用户名
+* password：密码
+* schemas：用户可以访问的逻辑库，多个库可以用逗号分隔
+* privileges check：是否开启表级权限检查
+* dml：配置表的权限，四位0或者1，分别代表增、改、查、删
+* readOnly：是否只读
+
+
+
+
+
+
+
+## MyCat分片
+
+### 垂直拆分
 
