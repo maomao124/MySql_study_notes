@@ -5790,6 +5790,162 @@ whitehost：白名单，
 
 
 
+## MyCat2配置
+
+### server.json
+
+服务相关的配置
+
+```json
+{
+  "loadBalance":{
+    "defaultLoadBalance":"BalanceRandom",
+    "loadBalances":[]
+  },
+  "mode":"local",
+  "properties":{},
+  "server":{
+    "bufferPool":{
+
+    },
+    "idleTimer":{
+      "initialDelay":3,
+      "period":60000,
+      "timeUnit":"SECONDS"
+    },
+    "ip":"0.0.0.0",
+    "mycatId":1,
+    "port":8066,
+    "reactorNumber":8,
+    "tempDirectory":null,
+    "timeWorkerPool":{
+      "corePoolSize":0,
+      "keepAliveTime":1,
+      "maxPendingLimit":65535,
+      "maxPoolSize":2,
+      "taskTimeout":5,
+      "timeUnit":"MINUTES"
+    },
+    "workerPool":{
+      "corePoolSize":1,
+      "keepAliveTime":1,
+      "maxPendingLimit":65535,
+      "maxPoolSize":1024,
+      "taskTimeout":5,
+      "timeUnit":"MINUTES"
+    }
+  }
+}
+
+```
+
+
+
+
+
+### {用户名}.user.json
+
+
+
+所在目录：mycat/conf/users
+
+
+
+```json
+{
+	"dialect":"mysql",
+	"ip":null,
+	"password":"123456",
+	"transactionType":"proxy",
+	"username":"root"
+}
+```
+
+
+
+* ip：客户端访问ip，建议为空,填写后会对客户端的ip进行限制
+* username：用户名
+* password：密码
+* isolation：设置初始化的事务隔离级别
+  * READ_UNCOMMITTED:1
+  * READ_COMMITTED:2 
+  * REPEATED_READ:3,默认 
+  * SERIALIZABLE:4
+* transactionType：事务类型
+  * proxy 本地事务,在涉及大于 1 个数据库的事务,commit 阶段失败会导致不一致,但是兼容性最好
+  * xa 事务,需要确认存储节点集群类型是否支持 XA
+
+
+
+
+
+### 数据源
+
+所在目录：mycat/conf/datasources
+
+命名：{数据源名字}.datasource.json
+
+
+
+prototypeDs.datasource.json：
+
+```json
+{
+	"dbType":"mysql",
+	"idleTimeout":60000,
+	"initSqls":[],
+	"initSqlsGetConnection":true,
+	"instanceType":"READ_WRITE",
+	"maxCon":1000,
+	"maxConnectTimeout":3000,
+	"maxRetryCount":5,
+	"minCon":1,
+	"name":"prototypeDs",
+	"password":"123456",
+	"type":"JDBC",
+	"url":"jdbc:mysql://localhost:3306/mysql?useUnicode=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8",
+	"user":"root",
+	"weight":0
+}
+```
+
+
+
+* dbType：数据库类型，mysql
+* name：用户名
+* password：密码
+* type：数据源类型，默认 JDBC
+* url：访问数据库地址
+* idleTimeout：空闲连接超时时间
+* initSqls：初始化sql
+* initSqlsGetConnection：对于 jdbc 每次获取连接是否都执行 initSql
+* instanceType：配置实例只读还是读写
+  * 可选值：READ_WRITE,READ,WRITE
+* weight ：负载均衡权重
+
+
+
+
+
+### 集群
+
+所在目录：mycat/conf/clusters
+
+命名：{集群名字}.cluster.json
+
+
+
+prototype.cluster.json：
+
+```json
+```
+
+
+
+
+
+
+
 ## MyCat分片
 
 ### 垂直拆分
