@@ -4547,10 +4547,23 @@ PS C:\Users\mao\Desktop>
 
 ### 3.  运行
 
+
+
+创建mysql网络
+
+```sh
+C:\Users\mao>docker network create mysql
+a713e60a41df792986ce14cc86888691dbdbc6850a009dd5625437cee3da64cd
+
+C:\Users\mao>
+```
+
+
+
 master节点：
 
 ```sh
-docker run -p 3308:3306 --privileged=true --name mysql2 -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+docker run -p 3308:3306 --privileged=true --name mysql2 --network mysql -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
 ```
 
 
@@ -4558,7 +4571,7 @@ docker run -p 3308:3306 --privileged=true --name mysql2 -v H:/Docker/mysql2/log/
 slave节点：
 
 ```sh
-docker run -d -p 3309:3306 --privileged=true -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
+docker run -d -p 3309:3306 --privileged=true --network mysql -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
 ```
 
 
@@ -4568,10 +4581,10 @@ docker run -d -p 3309:3306 --privileged=true -v H:/Docker/mysql3/log/:/var/log/m
 
 
 ```sh
-PS C:\Users\mao\Desktop> docker run -p 3308:3306 --privileged=true --name mysql2 -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
-24ee3e986397d792a72edca86c0bed0e369ed86d8458780465603af783e28b2e
-PS C:\Users\mao\Desktop> docker run -d -p 3309:3306 --privileged=true -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
-81902b3cfdc4cd424993f83ff2d9f530f5936628afec398f8ee128a915184ce1
+PS C:\Users\mao\Desktop> docker run -p 3308:3306 --privileged=true --name mysql2 --network mysql -v H:/Docker/mysql2/log/:/var/log/mysql/ -v H:/Docker/mysql2/data/:/var/lib/mysql/ -v H:/Docker/mysql2/conf/:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+acc4ae47d7fe4c70a9ce0968495fde6ba1562b8d5c348d44caec902f1b8fe8f0
+PS C:\Users\mao\Desktop> docker run -d -p 3309:3306 --privileged=true --network mysql -v H:/Docker/mysql3/log/:/var/log/mysql -v H:/Docker/mysql3/data:/var/lib/mysql -v H:/Docker/mysql3/conf:/etc/mysql/conf.d -e MYSQL_ROOT_PASSWORD=123456  --name mysql3 mysql
+bc3a894f3f5ad0d1015a6e1a5fe155de88c89077b15ba8b68d0e47b437608efe
 PS C:\Users\mao\Desktop>
 ```
 
@@ -4584,13 +4597,12 @@ docker ps -a
 
 
 ```sh
-PS C:\Users\mao\Desktop> docker ps -a
-CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS                      PORTS                               NAMES
-81902b3cfdc4   mysql     "docker-entrypoint.s…"   24 seconds ago   Up 24 seconds               33060/tcp, 0.0.0.0:3309->3306/tcp   mysql3
-24ee3e986397   mysql     "docker-entrypoint.s…"   38 seconds ago   Up 37 seconds               33060/tcp, 0.0.0.0:3308->3306/tcp   mysql2
-2d379d342bb6   mysql     "docker-entrypoint.s…"   25 hours ago     Exited (0) 53 minutes ago                                       mysql1
-3ca156e4541d   tomcat    "catalina.sh run"        26 hours ago     Exited (143) 25 hours ago                                       tomcat1
-3948921a6099   redis     "docker-entrypoint.s…"   26 hours ago     Exited (0) 25 hours ago                                         redis1
+CONTAINER ID   IMAGE                COMMAND                  CREATED          STATUS          PORTS                                            NAMES
+39eda98e3f14   mysql                "docker-entrypoint.s…"   35 seconds ago   Up 34 seconds   33060/tcp, 0.0.0.0:3309->3306/tcp                mysql3
+27c63b3f1ae1   mysql                "docker-entrypoint.s…"   45 seconds ago   Up 44 seconds   33060/tcp, 0.0.0.0:3308->3306/tcp                mysql2
+1219851e3bc5   grafana/grafana      "/run.sh"                4 days ago       Up 4 minutes    0.0.0.0:3000->3000/tcp                           desktop_grafana_1
+059cf60a61b1   google/cadvisor      "/usr/bin/cadvisor -…"   4 days ago       Up 4 minutes    0.0.0.0:8080->8080/tcp                           desktop_cadvisor_1
+71da6b2b40a2   tutum/influxdb:0.9   "/run.sh"                4 days ago       Up 4 minutes    0.0.0.0:8083->8083/tcp, 0.0.0.0:8086->8086/tcp   desktop_influxdb_1
 PS C:\Users\mao\Desktop>
 ```
 
@@ -4853,6 +4865,20 @@ mysql>
 
 
 
+或者
+
+```sh
+docker exec -it mysql2 /bin/bash
+```
+
+```sh
+mysql -u root -p
+```
+
+
+
+
+
 ### 9.  查看二进制日志坐标
 
 show master status;
@@ -4864,7 +4890,7 @@ mysql> show master status;
 +---------------+----------+--------------+------------------+-------------------+
 | File          | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
 +---------------+----------+--------------+------------------+-------------------+
-| binlog.000002 |      157 |              |                  |                   |
+| binlog.000001 |      157 |              |                  |                   |
 +---------------+----------+--------------+------------------+-------------------+
 1 row in set (0.00 sec)
 
@@ -4947,8 +4973,8 @@ mysql>
 
 
 ```sh
-CHANGE REPLICATION SOURCE TO SOURCE_HOST='113.221.210.40', SOURCE_USER='slave',SOURCE_PORT=3308,
-SOURCE_PASSWORD='123456', SOURCE_LOG_FILE='binlog.000002',
+CHANGE REPLICATION SOURCE TO SOURCE_HOST='mysql2', SOURCE_USER='slave',SOURCE_PORT=3306,
+SOURCE_PASSWORD='', SOURCE_LOG_FILE='binlog.000001',
 SOURCE_LOG_POS=157;
 ```
 
@@ -4957,8 +4983,8 @@ SOURCE_LOG_POS=157;
 8.0.23之前：
 
 ```sh
-CHANGE MASTER TO MASTER_HOST='113.221.210.40', MASTER_USER='slave',MASTER_PORT=3308,
-MASTER_PASSWORD='123456', MASTER_LOG_FILE='binlog.000002',
+CHANGE MASTER TO MASTER_HOST='mysql2', MASTER_USER='slave',MASTER_PORT=3306,
+MASTER_PASSWORD='123456', MASTER_LOG_FILE='binlog.000001',
 MASTER_LOG_POS=157;
 ```
 
@@ -4978,10 +5004,10 @@ MASTER_LOG_POS=157;
 
 
 ```sh
-mysql> CHANGE REPLICATION SOURCE TO SOURCE_HOST='113.221.210.40', SOURCE_USER='slave',SOURCE_PORT=3308,
-    -> SOURCE_PASSWORD='123456', SOURCE_LOG_FILE='binlog.000002',
+mysql> CHANGE REPLICATION SOURCE TO SOURCE_HOST='mysql2', SOURCE_USER='slave',SOURCE_PORT=3306,
+    -> SOURCE_PASSWORD='123456', SOURCE_LOG_FILE='binlog.000003',
     -> SOURCE_LOG_POS=157;
-Query OK, 0 rows affected, 2 warnings (0.41 sec)
+Query OK, 0 rows affected, 1 warning (0.63 sec)
 
 mysql>
 ```
@@ -4995,7 +5021,7 @@ mysql>
 输入以下命令：
 
 ```sh
-start replica; 
+start replica;
 ```
 
 8.0.23之前：
@@ -6091,3 +6117,139 @@ mysql.schema.json：
 
 ### 垂直拆分
 
+mycat配置示例：
+
+ schema.xml：
+
+```xml
+<schema name="SHOPPING" checkSQLschema="true" sqlMaxLimit="100">
+<table name="tb_goods_base" dataNode="dn1" primaryKey="id" />
+<table name="tb_goods_brand" dataNode="dn1" primaryKey="id" />
+<table name="tb_goods_cat" dataNode="dn1" primaryKey="id" />
+<table name="tb_goods_desc" dataNode="dn1" primaryKey="goods_id" />
+<table name="tb_goods_item" dataNode="dn1" primaryKey="id" />
+<table name="tb_order_item" dataNode="dn2" primaryKey="id" />
+<table name="tb_order_master" dataNode="dn2" primaryKey="order_id" />
+<table name="tb_order_pay_log" dataNode="dn2" primaryKey="out_trade_no" />
+<table name="tb_user" dataNode="dn3" primaryKey="id" />
+<table name="tb_user_address" dataNode="dn3" primaryKey="id" />
+<table name="tb_areas_provinces" dataNode="dn3" primaryKey="id"/>
+<table name="tb_areas_city" dataNode="dn3" primaryKey="id"/>
+<table name="tb_areas_region" dataNode="dn3" primaryKey="id"/>
+</schema>
+<dataNode name="dn1" dataHost="dhost1" database="shopping" />
+<dataNode name="dn2" dataHost="dhost2" database="shopping" />
+<dataNode name="dn3" dataHost="dhost3" database="shopping" />
+<dataHost name="dhost1" maxCon="1000" minCon="10" balance="0"
+writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"
+slaveThreshold="100">
+<heartbeat>select user()</heartbeat>
+<writeHost host="master" url="jdbc:mysql://192.168.200.210:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="1234" />
+</dataHost>
+<dataHost name="dhost2" maxCon="1000" minCon="10" balance="0"
+writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"
+slaveThreshold="100">
+<heartbeat>select user()</heartbeat>
+<writeHost host="master" url="jdbc:mysql://192.168.200.213:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="1234" />
+</dataHost>
+<dataHost name="dhost3" maxCon="1000" minCon="10" balance="0"
+writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"
+slaveThreshold="100">
+<heartbeat>select user()</heartbeat>
+<writeHost host="master" url="jdbc:mysql://192.168.200.214:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="1234" />
+</dataHost>
+```
+
+
+
+server.xml：
+
+```xml
+<user name="root" defaultAccount="true">
+<property name="password">123456</property>
+<property name="schemas">SHOPPING</property>
+<!-- 表级 DML 权限设置 -->
+<!--
+<privileges check="true">
+<schema name="DB01" dml="0110" >
+<table name="TB_ORDER" dml="1110"></table>
+</schema>
+</privileges>
+-->
+</user>
+<user name="user">
+<property name="password">123456</property>
+<property name="schemas">SHOPPING</property>
+<property name="readOnly">true</property>
+</user>
+
+```
+
+
+
+#### 全局表
+
+```xml
+<table name="tb_areas_provinces" dataNode="dn1,dn2,dn3" primaryKey="id"
+type="global"/>
+<table name="tb_areas_city" dataNode="dn1,dn2,dn3" primaryKey="id"
+type="global"/>
+<table name="tb_areas_region" dataNode="dn1,dn2,dn3" primaryKey="id"
+type="global"/>
+```
+
+
+
+
+
+
+
+### 水平拆分
+
+mycat配置示例：
+
+
+
+schema.xml：
+
+```xml
+<schema name="ITCAST" checkSQLschema="true" sqlMaxLimit="100">
+<table name="tb_log" dataNode="dn4,dn5,dn6" primaryKey="id" rule="mod-long" />
+</schema>
+<dataNode name="dn4" dataHost="dhost1" database="itcast" />
+<dataNode name="dn5" dataHost="dhost2" database="itcast" />
+<dataNode name="dn6" dataHost="dhost3" database="itcast" />
+```
+
+
+
+ server.xml：
+
+```xml
+<user name="root" defaultAccount="true">
+<property name="password">123456</property>
+<property name="schemas">SHOPPING,ITCAST</property>
+<!-- 表级 DML 权限设置 -->
+<!--
+<privileges check="true">
+<schema name="DB01" dml="0110" >
+<table name="TB_ORDER" dml="1110"></table>
+</schema>
+</privileges>
+-->
+</user>
+```
+
+
+
+
+
+## 分片规则
+
+范围分片
