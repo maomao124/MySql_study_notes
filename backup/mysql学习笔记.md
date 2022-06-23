@@ -6252,4 +6252,457 @@ schema.xml：
 
 ## 分片规则
 
-范围分片
+### 范围分片
+
+根据指定的字段及其配置的范围与数据节点的对应情况， 来决定该数据属于哪一个分片。
+
+
+
+规则名称：auto-sharding-long
+
+
+
+```xml
+<tableRule name="auto-sharding-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>rang-long</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+```xml
+<function name="rang-long"
+			  class="io.mycat.route.function.AutoPartitionByLong">
+		<property name="mapFile">autopartition-long.txt</property>
+	</function>
+```
+
+
+
+
+
+| 属性 | 描述 |
+| ---- | :--: |
+|columns |标识将要分片的表字段|
+|algorithm |指定分片函数与function的对应关系|
+|class| 指定该分片算法对应的类|
+|mapFile |对应的外部配置文件 type 默认值为0 ; 0 表示Integer , 1 表示String|
+|defaultNode| 默认节点 默认节点的所用:枚举分片时,如果碰到不识别的枚举值, 就让它路 由到默认节点 ; 如果没有默认值,碰到不识别的则报错 。|
+
+
+
+
+autopartition-long.txt：
+
+```sh
+0-500M=0
+500M-1000M=1
+1000M-1500M=2
+```
+
+含义：0-500万之间的值，存储在0号数据节点(数据节点的索引从0开始) ； 500万-1000万之间的 数据存储在1号数据节点 ； 1000万-1500万的数据节点存储在2号节点 
+
+
+
+
+
+### 取模分片
+
+根据指定的字段值与节点数量进行求模运算，根据运算结果， 来决定该数据属于哪一个分片
+
+
+
+规则名称：mod-long
+
+
+
+```xml
+<tableRule name="mod-long">
+		<rule>
+			<columns>id</columns>
+			<algorithm>mod-long</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+```xml
+<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+		<!-- how many data nodes -->
+		<property name="count">3</property>
+	</function>
+```
+
+
+
+
+
+* columns： 标识将要分片的表字段 
+* algorithm： 指定分片函数与function的对应关系 
+* class： 指定该分片算法对应的类 
+* count ：数据节点的数量
+
+
+
+
+
+###  一致性hash分片
+
+一致性哈希，相同的哈希因子计算值总是被划分到相同的分区表中，不会因为分区节点的增加而改 变原来数据的分区位置，有效的解决了分布式数据的拓容问题
+
+先算出字段的哈希值，再根据哈希值计算要到哪一个节点
+
+
+
+规则名称：sharding-by-murmur
+
+
+
+```xml
+<tableRule name="sharding-by-murmur">
+		<rule>
+			<columns>id</columns>
+			<algorithm>murmur</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+```xml
+<function name="murmur"
+			  class="io.mycat.route.function.PartitionByMurmurHash">
+		<property name="seed">0</property><!-- 默认是0 -->
+		<property name="count">2</property><!-- 要分片的数据库节点数量，必须指定，否则没法分片 -->
+		<property name="virtualBucketTimes">160</property><!-- 一个实际的数据库节点被映射为这么多虚拟节点，默认是160倍，也就是虚拟节点数是物理节点数的160倍 -->
+		<!-- <property name="weightMapFile">weightMapFile</property> 节点的权重，没有指定权重的节点默认是1。以properties文件的格式填写，以从0开始到count-1的整数值也就是节点索引为key，以节点权重值为值。所有权重值必须是正整数，否则以1代替 -->
+		<!-- <property name="bucketMapPath">/etc/mycat/bucketMapPath</property>
+			用于测试时观察各物理节点与虚拟节点的分布情况，如果指定了这个属性，会把虚拟节点的murmur hash值与物理节点的映射按行输出到这个文件，没有默认值，如果不指定，就不会输出任何东西 -->
+	</function>
+```
+
+
+
+
+
+* columns： 标识将要分片的表字段 
+* algorithm： 指定分片函数与function的对应关系 
+* class： 指定该分片算法对应的类
+* seed ：创建murmur_hash对象的种子，默认0 
+* count ：要分片的数据库节点数量，必须指定，否则没法分片 
+* virtualBucketTimes： 一个实际的数据库节点被映射为这么多虚拟节点，默认是160倍，也 就是虚拟节点数是物理节点数的160 倍;virtualBucketTimes*count就是虚拟结点数量 
+*  weightMapFile： 节点的权重，没有指定权重的节点默认是1。以properties文件的 格式填写，以从0开始到count-1的整数值也就是节点索引为key， 以节点权重值为值。所有权重值必须是正整数，否则以1代替 
+* bucketMapPath： 用于测试时观察各物理节点与虚拟节点的分布情况，如果指定了这个 属性，会把虚拟节点的murmur hash值与物理节点的映射按行输出 到这个文件，没有默认值，如果不指定，就不会输出任何东西
+
+
+
+
+
+
+
+### 枚举分片
+
+通过在配置文件中配置可能的枚举值, 指定数据分布到不同数据节点上
+
+
+
+规则名称：sharding-by-intfile
+
+
+
+```xml
+<tableRule name="sharding-by-intfile">
+		<rule>
+			<columns>sharding_id</columns>
+			<algorithm>hash-int</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+
+
+```xml
+<function name="hash-int"
+			  class="io.mycat.route.function.PartitionByFileMap">
+		<property name="mapFile">partition-hash-int.txt</property>
+	</function>
+```
+
+
+
+partition-hash-int.txt：
+
+```sh
+1=0
+2=1
+3=2
+```
+
+
+
+* columns ：标识将要分片的表字段 
+* algorithm ：指定分片函数与function的对应关系 
+* class： 指定该分片算法对应的类 
+* mapFile ：对应的外部配置文件 
+* type： 默认值为0 ; 0 表示Integer , 1 表示String 
+* defaultNode： 默认节点 ; 小于0 标识不设置默认节点 , 大于等于0代表设置默认节点 ; 默认节点的所用:枚举分片时,如果碰到不识别的枚举值, 就让它路由到默认节 点 ; 如果没有默认值,碰到不识别的则报错 。
+
+
+
+
+
+### 应用指定算法
+
+运行阶段由应用自主决定路由到那个分片 , 直接根据字符子串（必须是数字）计算分片号。
+
+比如根据字符串的前两位计算，前两位为00时到第一个节点，前两位为01时到第二个节点，前两位为02时到第三个节点。
+
+
+
+规则名称：sharding-by-substring
+
+
+
+```xml
+<tableRule name="sharding-by-substring">
+	<rule>
+		<columns>id</columns>
+		<algorithm>sharding-by-substring</algorithm>
+	</rule>
+</tableRule>
+```
+
+
+
+```xml
+<function name="sharding-by-substring"
+class="io.mycat.route.function.PartitionDirectBySubString">
+	<property name="startIndex">0</property> <!-- zero-based -->
+	<property name="size">2</property>
+	<property name="partitionCount">3</property>
+	<property name="defaultPartition">0</property>
+</function>
+
+```
+
+
+
+* columns： 标识将要分片的表字段 
+* algorithm： 指定分片函数与function的对应关系 
+* class： 指定该分片算法对应的类 
+* startIndex ：字符子串起始索引
+*  size ：字符长度 
+* partitionCount ：分区(分片)数量 
+* defaultPartition： 默认分片(在分片数量定义时, 字符标示的分片编号不在分片数量内时, 使用默认分片)
+
+
+
+示例：id=05-100000002 , 在此配置中代表根据id中从 startIndex=0，开始，截取siz=2位数字即 05，05就是获取的分区，如果没找到对应的分片则默认分配到defaultPartition 。
+
+
+
+
+
+### 固定分片hash算法
+
+该算法类似于十进制的求模运算，但是为二进制的操作，例如，取 id 的二进制低 10 位 与 1111111111 进行位 & 运算，位与运算最小值为 0000000000，最大值为1111111111，转换为十 进制，也就是位于0-1023之间。
+
+
+
+* 如果是求模，连续的值，分别分配到各个不同的分片；但是此算法会将连续的值可能分配到相同的 分片，降低事务处理的难度。 
+* 可以均匀分配，也可以非均匀分配。 
+* 分片字段必须为数字类型。
+
+
+
+规则名称：sharding-by-long-hash
+
+
+
+```xml
+<tableRule name="sharding-by-long-hash">
+	<rule>
+		<columns>id</columns>
+		<algorithm>sharding-by-long-hash</algorithm>
+	</rule>
+</tableRule>
+```
+
+
+
+```xml
+<!-- 分片总长度为1024，count与length数组长度必须一致； -->
+<function name="sharding-by-long-hash"
+class="io.mycat.route.function.PartitionByLong">
+	<property name="partitionCount">2,1</property>
+	<property name="partitionLength">256,512</property>
+</function>
+```
+
+
+
+
+
+* columns： 标识将要分片的表字段名 
+* algorithm ：指定分片函数与function的对应关系 
+* class ：指定该分片算法对应的类
+*  partitionCount ：分片个数列表 
+* partitionLength： 分片范围列表
+
+
+
+
+
+### 字符串hash解析算法
+
+截取字符串中的指定位置的子字符串, 进行hash算法， 算出分片。
+
+
+
+规则名称：sharding-by-stringhash
+
+
+
+```xml
+<tableRule name="sharding-by-stringhash">
+	<rule>
+		<columns>name</columns>
+		<algorithm>sharding-by-stringhash</algorithm>
+	</rule>
+</tableRule>
+```
+
+
+
+```xml
+<function name="sharding-by-stringhash"
+class="io.mycat.route.function.PartitionByString">
+	<property name="partitionLength">512</property> <!-- zero-based -->
+	<property name="partitionCount">2</property>
+	<property name="hashSlice">0:2</property>
+</function>
+```
+
+
+
+* columns： 标识将要分片的表字段 
+* algorithm ：指定分片函数与function的对应关系 
+* class： 指定该分片算法对应的类 
+* partitionLength： hash求模基数 ; length*count=1024 (出于性能考虑)
+* partitionCount ：分区数 
+* hashSlice： hash运算位 , 根据子字符串的hash运算 ; 0 代表 str.length() , -1 代表 str.length()-1 , 大于0只代表数字自身 ; 可以理解 为substring（start，end），start为0则只表示0
+
+
+
+
+
+### 按天分片算法
+
+按照日期及对应的时间周期来分片。
+
+
+
+规则名称：sharding-by-date
+
+
+
+```xml
+<tableRule name="sharding-by-date">
+		<rule>
+			<columns>createTime</columns>
+			<algorithm>partbyday</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+```xml
+<function name="partbyday"
+			  class="io.mycat.route.function.PartitionByDate">
+		<property name="dateFormat">yyyy-MM-dd</property>
+		<property name="sNaturalDay">0</property>
+		<property name="sBeginDate">2014-01-01</property>
+		<property name="sEndDate">2014-01-31</property>
+		<property name="sPartionDay">10</property>
+	</function>
+<!--
+从开始时间开始，每10天为一个分片，到达结束时间之后，会重复开始分片插入
+配置表的 dataNode 的分片，必须和分片规则数量一致，例如 2022-01-01 到 2022-12-31 ，每
+10天一个分片，一共需要37个分片。
+-->
+```
+
+
+
+* columns 标识将要分片的表字段 
+* algorithm 指定分片函数与function的对应关系 
+* class 指定该分片算法对应的类 
+* dateFormat 日期格式 
+* sBeginDate 开始日期 
+* sEndDate 结束日期，如果配置了结束日期，则代码数据到达了这个日期的分片后，会重复从开始分片插入 
+* sPartionDay 分区天数，默认值 10 ，从开始日期算起，每个10天一个分区
+
+
+
+
+
+### 自然月分片
+
+使用场景为按照月份来分片, 每个自然月为一个分片
+
+
+
+规则名称：sharding-by-month
+
+
+
+```xml
+<tableRule name="sharding-by-month">
+		<rule>
+			<columns>create_time</columns>
+			<algorithm>partbymonth</algorithm>
+		</rule>
+	</tableRule>
+```
+
+
+
+```xml
+<function name="partbymonth"
+			  class="io.mycat.route.function.PartitionByMonth">
+		<property name="dateFormat">yyyy-MM-dd</property>
+		<property name="sBeginDate">2015-01-01</property>
+	</function>
+<!--
+从开始时间开始，一个月为一个分片，到达结束时间之后，会重复开始分片插入
+配置表的 dataNode 的分片，必须和分片规则数量一致，例如 2022-01-01 到 2022-12-31 ，一
+共需要12个分片。
+-->
+```
+
+
+
+* columns 标识将要分片的表字段 
+* algorithm 指定分片函数与function的对应关系 
+* class 指定该分片算法对应的类 
+* dateFormat 日期格式 
+* sBeginDate 开始日期 
+* sEndDate 结束日期，如果配置了结束日期，则代码数据到达了这个日期的分片后，会重复从开始分片插入
+
+
+
+
+
+
+
+# MyCat管理及监控
+
+
+

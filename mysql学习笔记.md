@@ -1,6 +1,8 @@
 # ---MySql学习笔记---
 
-by mao
+----
+
+
 
 # 事务
 
@@ -6703,6 +6705,193 @@ class="io.mycat.route.function.PartitionByString">
 
 
 # MyCat管理及监控
+
+## MyCat管理
+
+Mycat默认开通2个端口，可以在server.xml中进行修改。
+
+* 8066 数据访问端口，即进行 DML 和 DDL 操作。 
+* 9066 数据库管理端口，即 mycat 服务管理控制功能，用于管理mycat的整个集群状态
+
+
+
+连接：
+
+```sh
+mysql -p 9066 -u root -p
+```
+
+
+
+| 命令 | 含义 |
+| :--: | :--: |
+|show @@help |查看Mycat管理工具帮助文档 |
+|show @@version |查看Mycat的版本 |
+|reload @@config |重新加载Mycat的配置文件|
+|show @@datasource| 查看Mycat的数据源信息|
+|show @@datanode |查看MyCat现有的分片节点信息|
+|show @@threadpool |查看Mycat的线程池信息|
+|show @@sql| 查看执行的SQL|
+|show @@sql.sum |查看执行的SQL统计|
+
+
+
+
+
+## MyCat-eye
+
+Mycat-web(Mycat-eye)是对mycat-server提供监控服务，功能不局限于对mycat-server使 用。他通过JDBC连接对Mycat、Mysql监控，监控远程服务器(目前仅限于linux系统)的cpu、内 存、网络、磁盘。 Mycat-eye运行过程中需要依赖zookeeper。
+
+
+
+https://gitee.com/MycatOne/Mycat-Eye/
+
+
+
+*  etc：jetty配置文件
+* lib ：依赖jar包
+* mycat-web：mycat-web项目
+* readme.txt
+* start.jar：启动jar
+* start.sh ：linux启动脚本
+
+
+
+启动：
+
+```sh
+sh start.sh
+```
+
+或者运行jar包
+
+
+
+访问：http://192.168.200.210:8082/mycat
+
+
+
+需要开启实时统计
+
+```xml
+<property name="useSqlStat">1</property> <!-- 1为开启实时统计、0为关闭 -->
+```
+
+
+
+
+
+
+
+# 读写分离
+
+## 一主一从
+
+
+
+schema.xml配置：
+
+```xml
+<dataHost name="dhost" maxCon="1000" minCon="10" balance="1" writeType="0"
+dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+	<heartbeat>select user()</heartbeat>
+	<writeHost host="master1" url="jdbc:mysql://mysql2:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" >
+		<readHost host="slave1" url="jdbc:mysql://mysql3:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" />
+	</writeHost>
+</dataHost>
+
+```
+
+
+
+writeHost代表的是写操作对应的数据库，readHost代表的是读操作对应的数据库。 所以我们要想 实现读写分离，就得配置writeHost关联的是主库，readHost关联的是从库。
+
+而仅仅配置好了writeHost以及readHost还不能完成读写分离，还需要配置一个非常重要的负责均衡 的参数 balance，取值有4种，具体含义如下：
+
+
+
+* 0： 不开启读写分离机制 , 所有读操作都发送到当前可用的writeHost上
+* 1： 全部的readHost 与 备用的writeHost 都参与select 语句的负载均衡（主要针对 于双主双从模式） 
+* 2 ：所有的读写操作都随机在writeHost , readHost上分发 
+* 3： 所有的读请求随机分发到writeHost对应的readHost上执行, writeHost不负担读压力
+
+
+
+
+
+## 双主双从
+
+一个主机 Master1 用于处理所有写请求，它的从机 Slave1 和另一台主机 Master2 还有它的从 机 Slave2 负责所有读请求。当 Master1 主机宕机后，Master2 主机负责写请求，Master1 、 Master2 互为备机。
+
+
+
+ schema.xml：
+
+```xml
+<schema name="ITCAST_RW2" checkSQLschema="true" sqlMaxLimit="100" dataNode="dn7">
+</schema>
+
+<dataNode name="dn7" dataHost="dhost7" database="db01" />
+
+
+<dataHost name="dhost7" maxCon="1000" minCon="10" balance="1" writeType="0"
+dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+<heartbeat>select user()</heartbeat>
+<writeHost host="master1" url="jdbc:mysql://master1:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" >
+<readHost host="slave1" url="jdbc:mysql://slave1:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" />
+</writeHost>
+<writeHost host="master2" url="jdbc:mysql://master2:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" >
+<readHost host="slave2" url="jdbc:mysql://slave2:3306?
+useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+user="root" password="123456" />
+</writeHost>
+</dataHost>
+
+```
+
+
+
+
+
+writeType：
+
+* 0 : 写操作都转发到第1台writeHost, writeHost1无法使用, 会切换到writeHost2上
+* 1 : 所有的写操作都随机地发送到配置的writeHost上
+
+
+
+switchType：
+
+* -1 : 不自动切换
+* 1 : 自动切换
+
+
+
+
+
+
+
+----
+
+end
+
+by mao
+
+----
+
+2022 06 23
+
+----
 
 
 
